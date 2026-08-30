@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Node (将来ビルドツールを導入した場合用)
+node_modules/
+dist/
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
