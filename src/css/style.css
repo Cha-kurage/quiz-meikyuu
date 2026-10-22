@@ -1,0 +1,322 @@
+/* ---------- 基本 ---------- */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  /* 仮の背景 (ダンジョンの石壁は素材が揃い次第差し替え) */
+  background-color: #2b2622;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .35) 0 3px, transparent 3px 64px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .25) 0 3px, transparent 3px 128px),
+    radial-gradient(ellipse at center, #3a332d 0%, #1c1815 100%);
+  /* 全体 MS ゴシック。Mac には入っていないので等幅の日本語フォントで代替 */
+  font-family: "MS Gothic", "ＭＳ ゴシック", "Osaka-Mono", "Osaka－等幅", "Hiragino Kaku Gothic ProN", "Yu Gothic", monospace;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- ステージ (1600x900 固定、JS で拡縮) ---------- */
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  transform-origin: 0 0;
+  touch-action: none;
+}
+
+/* ---------- 石板 (9スライスで任意サイズに伸縮) ---------- */
+.tablet {
+  position: absolute;
+  border-style: solid;
+  border-width: 40px;
+  border-image: url("../../assets/images/ui/tablet.png") 50 fill / 40px stretch;
+}
+
+#parts-tablet { left: 600px; top: 70px; width: 900px; height: 520px; }
+
+/* ---------- 出題ゾーン (白い角丸の枠) ---------- */
+#question-zone {
+  position: absolute;
+  left: 40px;
+  top: 110px;
+  width: 520px;
+  height: 670px;
+  border-radius: 28px;
+  background: #fff;
+  color: #222;
+}
+
+/* 「1/15」表示 (出題の頭に出て、フェードアウトする) */
+#question-counter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 130px;
+  opacity: 0;
+  transition: opacity .4s;
+  pointer-events: none;
+}
+#question-counter.show { opacity: 1; }
+
+/* 問題文: 1文字 = 1em の升目に並べ、5文字ごとに改行 */
+#question-text {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  transform: translateX(-50%);
+  font-size: 84px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.q-line { height: 1.35em; }
+.q-char {
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+}
+
+/* カウントダウン / 答え (問題文の下、早押しボタンの上) */
+#question-status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 396px;
+  text-align: center;
+}
+.q-countdown {
+  font-size: 120px;
+  line-height: 1;
+  color: #d33;
+}
+.q-answer-label {
+  font-size: 30px;
+  color: #777;
+}
+.q-answer {
+  margin-top: 4px;
+  font-size: 76px;
+  line-height: 1.2;
+  color: #d33;
+}
+
+/* ---------- 早押しボタン (出題ゾーンの下部中央) ---------- */
+#buzzer-btn {
+  position: absolute;
+  left: 190px;  /* 出題ゾーン(left 40, w 520)の中央 */
+  top: 654px;   /* 出題ゾーン(top 110, h 670)の下端から 24px 上 */
+  width: 220px;
+  height: 102px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform .09s ease-out;
+}
+#buzzer-btn img {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* 押した瞬間だけ沈む。一時停止中でも見た目は元に戻す (is-pressed は付くが見た目には反映しない) */
+#buzzer-btn:active { transform: translateY(10px) scale(.95); }
+
+/* ---------- パーツ (ドラッグで移動) ---------- */
+/* パーツ層はステージ全面。座標(left/top)はパーツ中心のステージ座標 */
+#parts-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.part {
+  position: absolute;
+  --rot: 0deg;
+  --scale: 1;
+  transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-drag: none;
+}
+.part.dragging {
+  --scale: 1.1;
+  cursor: grabbing;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .45));
+}
+.part.returning { transition: left .2s ease-out, top .2s ease-out; }
+
+/* ---------- 開発用: 座標を調べるパネル ---------- */
+#debug-coords-btn {
+  position: absolute;
+  left: 1326px;
+  top: 20px;
+  width: 152px;
+  height: 40px;
+  border: 2px solid #888;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, .5);
+  color: #ddd;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+#debug-coords-btn.active { background: #c9a24a; color: #2b2622; border-color: #c9a24a; }
+
+#debug-coords-panel {
+  position: absolute;
+  left: 1326px;
+  top: 68px;
+  width: 250px;
+  max-height: 300px;
+  margin: 0;
+  padding: 10px 12px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, .75);
+  color: #9f9;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+/* ---------- 解答ゾーン ---------- */
+#answer-zone {
+  position: absolute;
+  left: 600px;
+  top: 606px;
+  width: 900px;
+  height: 186px;
+  border: 6px solid #c9a24a; /* 黄土色 */
+  border-radius: 24px;
+}
+
+/* 解答ゾーン右下の小さめボタン */
+#submit-btn {
+  position: absolute;
+  left: 1326px;
+  top: 726px;
+  width: 152px;
+  height: 46px;
+  border: 0;
+  border-radius: 23px;
+  background: #c9a24a;
+  color: #2b2622;
+  font: inherit;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* 正誤判定: 解答ゾーンの中央前面に出す大きな⭕/❌ */
+#answer-mark {
+  position: absolute;
+  left: 1050px; /* 解答ゾーン(left600,width900)の中心 */
+  top: 699px;   /* 解答ゾーン(top606,height186)の中心 */
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%) scale(.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 500; /* パーツより手前に出す */
+}
+#answer-mark.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+#answer-mark.circle { border: 16px solid #e02020; border-radius: 50%; }
+#answer-mark.cross::before,
+#answer-mark.cross::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 100%;
+  background: #e02020;
+  border-radius: 12px;
+}
+#answer-mark.cross::before { transform: translate(-50%, -50%) rotate(45deg); }
+#answer-mark.cross::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/* 正誤判定ルール未設定のときだけの簡易メッセージ (開発用) */
+#answer-result {
+  position: absolute;
+  left: 650px;
+  top: 730px;
+  width: 300px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #ccc;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+#answer-result.show { opacity: 1; }
+
+/* ---------- 戻る / 進む ---------- */
+.nav-btn {
+  position: absolute;
+  top: 812px;
+  width: 170px;
+  height: 68px;
+  border: 4px solid #c9a24a;
+  border-radius: 34px;
+  background: rgba(0, 0, 0, .35);
+  color: #f1e9d8;
+  font: inherit;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: .1em;
+  cursor: pointer;
+}
+
+#prev-btn { left: 40px; }
+#next-btn { left: 1390px; }
+
+/* ---------- 左上メニュー / 右上ベル ---------- */
+.ui-btn {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+#menu-btn {
+  left: 28px;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+#menu-btn span {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  background: #f1e9d8;
+}
+
+#volume-btn { right: 24px; top: 16px; }
+
+#volume-btn img {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* 90度左回転 */
+  pointer-events: none;
+}

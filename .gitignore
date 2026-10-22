@@ -15,3 +15,6 @@ dist/
 # Logs
 *.log
 npm-debug.log*
+
+# Illustrator の一時ファイル
+~ai-*.tmp

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Quiz迷宮</title>
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+  <!-- 1600x900 の固定ステージを画面に合わせて拡縮する (PC / スマホ横向き共通) -->
+  <!-- 石板・パーツ・解答ゾーンは常に表示。早押しボタンは押すたびに出題の一時停止/再開を切り替える -->
+  <div id="stage">
+
+    <button id="menu-btn" class="ui-btn" type="button" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+
+    <button id="volume-btn" class="ui-btn" type="button" aria-label="音量">
+      <img src="assets/images/parts/illust_bell.png" alt="" draggable="false">
+    </button>
+
+    <!-- 左: 出題ゾーン -->
+    <section id="question-zone" aria-label="出題ゾーン">
+      <div id="question-counter"></div>
+      <div id="question-text"></div>
+      <div id="question-status"></div>
+    </section>
+
+    <!-- 出題ゾーン下部: 早押しボタン -->
+    <button id="buzzer-btn" type="button" aria-label="早押しボタン">
+      <img src="assets/images/ui/buzzer.png" alt="" draggable="false">
+    </button>
+
+    <!-- 右: パーツ置き場 (石板) -->
+    <section id="parts-tablet" class="tablet" aria-label="パーツ置き場"></section>
+
+    <!-- 右下: 解答ゾーン -->
+    <section id="answer-zone" aria-label="解答ゾーン"></section>
+
+    <!-- パーツ (ステージ座標で配置。石板と解答ゾーンの上をドラッグで移動できる) -->
+    <div id="parts-layer"></div>
+
+    <button id="submit-btn" type="button">これで解答</button>
+    <div id="answer-mark"></div>
+    <div id="answer-result"></div>
+
+    <!-- 開発用: 解答ゾーンに置いたパーツの座標(ゾーン内基準)と回転角を調べる -->
+    <button id="debug-coords-btn" type="button">座標を調べる</button>
+    <pre id="debug-coords-panel" hidden></pre>
+
+    <!-- 左下: 戻る / 右下: 進む -->
+    <button id="prev-btn" class="nav-btn" type="button">◀ 戻る</button>
+    <button id="next-btn" class="nav-btn" type="button">進む ▶</button>
+
+  </div>
+
+  <script src="src/js/parts.js"></script>
+  <script src="src/js/main.js"></script>
+  <script src="src/js/questions.js"></script>
+  <script src="src/js/drag.js"></script>
+  <script src="src/js/answers.js"></script>
+  <script src="src/js/quiz.js"></script>
+  <script src="src/js/debug-coords.js"></script>
+</body>
+</html>
