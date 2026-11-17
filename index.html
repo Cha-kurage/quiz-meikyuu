@@ -15,18 +15,21 @@
       <span></span><span></span><span></span>
     </button>
 
-    <button id="volume-btn" class="ui-btn" type="button" aria-label="音量">
-      <img src="assets/images/parts/illust_bell.png" alt="" draggable="false">
-    </button>
+    <!-- 右上の音量ボタン (ベル) は、答えのパーツにも使うのでパーツとして置く (main.js の DECOR_LAYOUT の ui_bell) -->
+
+    <!-- 9問目で背景から壁を取り出した跡。外の草原と鉄格子が見える (drag.js) -->
+    <div id="wall-hole" hidden></div>
 
     <!-- 左: 出題ゾーン -->
     <section id="question-zone" aria-label="出題ゾーン">
+      <div id="question-number"></div> <!-- 上に小さく出す問題番号 (常に表示) -->
       <div id="question-counter"></div>
       <div id="question-text"></div>
       <div id="question-status"></div>
     </section>
 
-    <!-- 出題ゾーン下部: 早押しボタン -->
+    <!-- 出題ゾーン下部: 早押しボタン。問題を開いたら、押されるまで上に吹き出しを出して待つ (quiz.js) -->
+    <div id="buzzer-hint" hidden>ボタンを押して出題</div>
     <button id="buzzer-btn" type="button" aria-label="早押しボタン">
       <img src="assets/images/ui/buzzer.png" alt="" draggable="false">
     </button>
@@ -44,6 +47,8 @@
     <div id="answer-mark"></div>
     <div id="answer-result"></div>
 
+    <!-- 開発用: 表示中の問題の正解の配置に、パーツを一発で並べる (debug-solve.js) -->
+    <button id="debug-solve-btn" type="button">正解を並べる</button>
     <!-- 開発用: 解答ゾーンに置いたパーツの座標(ゾーン内基準)と回転角を調べる -->
     <button id="debug-coords-btn" type="button">座標を調べる</button>
     <pre id="debug-coords-panel" hidden></pre>
@@ -56,10 +61,12 @@
 
   <script src="src/js/parts.js"></script>
   <script src="src/js/main.js"></script>
+  <script src="src/js/sound.js"></script>
   <script src="src/js/questions.js"></script>
   <script src="src/js/drag.js"></script>
   <script src="src/js/answers.js"></script>
   <script src="src/js/quiz.js"></script>
   <script src="src/js/debug-coords.js"></script>
+  <script src="src/js/debug-solve.js"></script>
 </body>
 </html>

@@ -55,6 +55,21 @@ body {
   color: #222;
 }
 
+/* 上に小さく出す問題番号 (常に表示。読み始めの大きい「n/15」が出ている間だけ隠す) */
+#question-number {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  text-align: center;
+  font-size: 30px;
+  color: #888;
+  opacity: 0;
+  transition: opacity .4s;
+  pointer-events: none;
+}
+#question-number.show { opacity: 1; }
+
 /* 「1/15」表示 (出題の頭に出て、フェードアウトする) */
 #question-counter {
   position: absolute;
@@ -73,7 +88,7 @@ body {
 #question-text {
   position: absolute;
   left: 50%;
-  top: 40px;
+  top: 58px; /* 上の小さい問題番号の下から */
   transform: translateX(-50%);
   font-size: 84px;
   line-height: 1.35;
@@ -91,7 +106,7 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  top: 396px;
+  top: 414px;
   text-align: center;
 }
 .q-countdown {
@@ -128,6 +143,39 @@ body {
   height: 100%;
   pointer-events: none;
 }
+/* 「ボタンを押して出題」の吹き出し (早押しボタンの真上。しっぽがボタンを指す) */
+#buzzer-hint {
+  position: absolute;
+  left: 300px;  /* 早押しボタンの中央 */
+  top: 636px;   /* 吹き出しの下端 (しっぽの先がボタンの上端あたり) */
+  transform: translate(-50%, -100%);
+  padding: 12px 26px;
+  border: 3px solid #333;
+  border-radius: 18px;
+  background: #fff;
+  color: #333;
+  font-size: 30px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-bob 1.4s ease-in-out infinite;
+}
+#buzzer-hint::before,
+#buzzer-hint::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-style: solid;
+  border-color: transparent;
+}
+#buzzer-hint::before { top: 100%; border-width: 16px 14px 0; border-top-color: #333; }
+#buzzer-hint::after { top: calc(100% - 1px); border-width: 12px 10px 0; border-top-color: #fff; }
+#buzzer-hint[hidden] { display: none; }
+@keyframes hint-bob {
+  0%, 100% { transform: translate(-50%, -100%); }
+  50% { transform: translate(-50%, calc(-100% - 6px)); }
+}
+
 /* 押した瞬間だけ沈む。一時停止中でも見た目は元に戻す (is-pressed は付くが見た目には反映しない) */
 #buzzer-btn:active { transform: translateY(10px) scale(.95); }
 
@@ -154,10 +202,16 @@ body {
   cursor: grabbing;
   filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .45));
 }
-.part.returning { transition: left .2s ease-out, top .2s ease-out; }
+.part.returning { transition: left .2s ease-out, top .2s ease-out, width .2s ease-out, height .2s ease-out; }
+/* 背景に置いた大きな木: ふだんは石板・出題ゾーンの後ろ。ドラッグ中は drag.js が z-index を上げて前に出す */
+.part.bg { z-index: -1; }
+/* 解答済みの問題で凍結したパーツ: 動かせない・回転できない。使用済みで他の問題には出ない */
+.part.frozen { pointer-events: none; cursor: default; }
+.part.is-hidden { display: none; }
 
 /* ---------- 開発用: 座標を調べるパネル ---------- */
-#debug-coords-btn {
+#debug-coords-btn,
+#debug-solve-btn {
   position: absolute;
   left: 1326px;
   top: 20px;
@@ -171,6 +225,8 @@ body {
   font-size: 16px;
   cursor: pointer;
 }
+#debug-solve-btn { left: 1164px; } /* 「座標を調べる」の左 */
+#debug-solve-btn:active { background: #c9a24a; color: #2b2622; border-color: #c9a24a; }
 #debug-coords-btn.active { background: #c9a24a; color: #2b2622; border-color: #c9a24a; }
 
 #debug-coords-panel {
@@ -218,6 +274,11 @@ body {
   font-weight: bold;
   cursor: pointer;
 }
+
+#submit-btn:disabled { opacity: .45; cursor: default; }
+/* パーツを解答ゾーン右下に置いても、ボタンが下に隠れて押せなくならないようにする。
+   パーツはドラッグするたびに z-index が増える (drag.js の topZ) ので、それよりずっと大きくしておく */
+#submit-btn { z-index: 10000; }
 
 /* 正誤判定: 解答ゾーンの中央前面に出す大きな⭕/❌ */
 #answer-mark {
@@ -312,11 +373,47 @@ body {
   background: #f1e9d8;
 }
 
-#volume-btn { right: 24px; top: 16px; }
+/* 右上のベル (音量ボタン) は、答えにも使うのでパーツとして置いている (main.js の DECOR_LAYOUT の ui_bell)。
+   ドラッグせずに押すと音量ボタンとして動く */
+.part[data-ui="volume"] { cursor: pointer; }
 
-#volume-btn img {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg); /* 90度左回転 */
+/* ---------- 12問目: 正解の⭕から取り出す赤丸 ---------- */
+/* 解答済みの問題の⭕は、まだ赤丸を取り出していなければ掴める */
+#answer-mark.grabbable { pointer-events: auto; cursor: grab; touch-action: none; }
+.part.red-circle {
+  box-sizing: border-box;
+  border: 6px solid #e02020;
+  border-radius: 50%;
+}
+.part.red-circle.in-mark { display: none; }
+
+/* ---------- 9問目: 背景から取り出す壁 ---------- */
+/* 壁のパーツ (石のブロック)。背景の格子 1マス (128x64) と同じ大きさ */
+.part.wall {
+  background-color: #5d5248;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, .12), transparent 40%, rgba(0, 0, 0, .25)),
+    radial-gradient(circle at 30% 40%, rgba(0, 0, 0, .18) 0 6px, transparent 7px),
+    radial-gradient(circle at 72% 65%, rgba(0, 0, 0, .15) 0 5px, transparent 6px);
+  border: 4px solid #1c1815;
+  border-radius: 4px;
+}
+/* 壁の中に収まっているとき (まだ取り出していない / 戻した) は見せない */
+.part.wall.in-wall { display: none; }
+
+/* 壁を取り出した跡: 外の草原と鉄格子が見える。木よりも後ろ */
+#wall-hole {
+  position: absolute;
+  width: 128px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+  border: 4px solid #1c1815;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 14px, #2a2a2e 14px 20px),             /* 鉄格子(縦) */
+    linear-gradient(180deg, transparent 0 8px, #2a2a2e 8px 13px, transparent 13px),       /* 鉄格子(横) */
+    linear-gradient(180deg, #9fd6f7 0 48%, #8fd16a 48%, #5fa944 100%);                    /* 空と草原 */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, .6);
   pointer-events: none;
 }
+#wall-hole[hidden] { display: none; }

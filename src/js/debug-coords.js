@@ -13,6 +13,7 @@
     const z = window.getAnswerZoneRect();
     const lines = [...document.querySelectorAll(".part")]
       .map((el) => {
+        if (el.classList.contains("is-hidden")) return null; // 使用済みで隠れているパーツは対象外
         const x = parseFloat(el.style.left);
         const y = parseFloat(el.style.top);
         if (x < z.l || x > z.r || y < z.t || y > z.b) return null; // ゾーン外は対象外
