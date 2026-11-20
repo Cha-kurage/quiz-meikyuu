@@ -549,8 +549,8 @@ body {
 #volume-bell.locked { cursor: default; } /* チュートリアル中・15問目の後は取り出せない */
 #volume-track {
   position: relative;
-  width: 280px;
-  height: 118px; /* 鼻の画像 648x272 と同じ比率 */
+  width: 187px;
+  height: 118px; /* 鼻の画像 432x272 (2026-11-20 ユーザーが描き直したもの) と同じ比率 */
   cursor: pointer;
   touch-action: none;
 }

@@ -7,7 +7,7 @@
 | （例）ダンジョン背景 | assets/images/bg_dungeon.png | ゲームまてりあるず (https://game-materials.com/) | 商用可・クレジット不要 | 全ページ共通背景 |
 | 大きな緑木 | assets/images/parts/illust_tree.png | イラストイメージ / DESIGNALIKIE (https://illustimage.com/?id=12182) | 無料。個人・商用ともに利用可 (Webサイト・広告物など)。素材そのものの転売は禁止。クレジット表記は任意。ライセンス確認: 2026-10-22 (https://illustimage.com/help.php) | Q7 信楽焼の「木」(背景の大きな木2本。ドラッグで縮小して解答ゾーンへ) |
 | ◯ (黒い輪) | assets/images/parts/symbol_circle.png | 自作 (Claude が Python/PIL で描いた仮素材。2026-11-17) | 自由に使える。正式な素材ができたら差し替える | Q12 ルパンの「゜」 |
-| 天狗の鼻 | assets/images/tengu/tengu_nose.png | いらすとや「天狗のイラスト」(youkai_tengu.png、ユーザー提供) から鼻だけを Claude が切り抜き・拡大 (2026-11-19) | いらすとやの利用規約に従う (**要確認**: 商用利用の点数制限など。https://www.irasutoya.com/p/terms.html) | 音量の調節 (180度回転して表示) |
+| 天狗の鼻 | assets/images/tengu/tengu_nose.png | いらすとや「天狗のイラスト」(youkai_tengu.png、ユーザー提供) から鼻だけを Claude が切り抜き・拡大 (2026-11-19)。2026-11-20 にユーザーが描き直したものに差し替え | いらすとやの利用規約に従う (**要確認**: 商用利用の点数制限など。https://www.irasutoya.com/p/terms.html) | 音量の調節 (180度回転して表示) |
 | 偽天狗 | assets/images/tengu/nise_tengu.png | ユーザー提供の「偽天狗.png」(いらすとやの天狗を元にしたもの) の白背景を Claude が透過 (2026-11-19) | 同上 (いらすとやの規約。**要確認**) | チュートリアルの案内役 |
 | 回る矢印 (4つの矢印の輪) | assets/images/parts/illust_arrows.png | ユーザー提供 (ダウンロードフォルダの「28114」。配布元は未確認) を Claude が 400x400 に縮小 (2026-11-20) | **要確認** (配布元と利用規約) | Q13 ひまわりの「まわり」 |
 | 例題の文字 富・＋・ー・山 | assets/images/parts/tut_fu.png ほか tut_*.png | 自作 (Claude が Zen Maru Gothic Bold で描いた仮素材。2026-11-19) | フォントは SIL Open Font License (画像にしたものは自由に使える) | チュートリアルの例題 (富士山) |
