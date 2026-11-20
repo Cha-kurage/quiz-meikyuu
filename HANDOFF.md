@@ -25,17 +25,17 @@
 - まだ: 元スライドの「解答ゾーンに入ったらパーツを自動で収まるサイズにする」、メニューからのページ移動、天狗の会話の演出 (表情など)、16問目に正解したときの演出 (迷宮の門が開く)、13〜15問目でボタンを押せなくする (元スライド「15文字の問題文に気付かせる」)。
 
 ## 0. フォルダ移動のお知らせ (2026-11-06)
-- karakara フォルダをレーベル別 (からのもぬけ / 空空) に整理したため、このプロジェクトは `/Users/chakurage/Desktop/karakara/web_クイズなぞ` から **`/Users/chakurage/Desktop/karakara/からのもぬけ/web_クイズなぞ`** へ移動した。
+- karakara フォルダをレーベル別 (からのもぬけ / 空空) に整理したため、このプロジェクトは `karakara/web_クイズなぞ` から **`karakara/からのもぬけ/web_クイズなぞ`** へ移動した (リポジトリを公開したので、Mac 上の場所はここには書かない)。
 - 作業中の worktree (`.claude/worktrees/game-creation-continued-3bc8b8`) も一緒に移動済み。git の worktree の紐付けは `git worktree repair` で修復済み。未コミットの変更はそのまま残っている。
 - 移動前のパスで開いていた Claude のセッションは、元のフォルダが無くなったため使えない。新しいパスで新しいセッションを開き、この引き継ぎ書を最初に読ませること。
 
 ## 1. プロジェクト概要
 - 謎解き公演「Quiz迷宮」のWebサイト。天狗が案内役の早押しクイズ形式で、全15問。解答は文字・イラストのパーツを「解答ゾーン」に配置して作る。
-- 仕様の元は Google スライド (https://docs.google.com/presentation/d/1nuHOdW2vCmclLUcJfhsuU5tnRIgITwCy/edit)。Google Drive 系の MCP ツール (`read_file_content`、fileId=`1nuHOdW2vCmclLUcJfhsuU5tnRIgITwCy`) で全文を読める。
+- 仕様の元は Google スライド「謎解き作問12-クイズ.pptx」(非公開。リンクは制作メンバーに確認)。Google Drive 系の MCP ツールで、名前で探して全文を読める。
 - ユーザーは日本語で話す。制作元は「からのもぬけ」。
 
 ## 2. リポジトリ・環境
-- 作業フォルダ: `/Users/chakurage/Desktop/karakara/からのもぬけ/web_クイズなぞ` (2026-11-06 に移動。旧: `/Users/chakurage/Desktop/karakara/web_クイズなぞ`)
+- 作業フォルダ: デスクトップの `karakara/からのもぬけ/web_クイズなぞ` (2026-11-06 に移動。旧: `karakara/web_クイズなぞ`)
 - GitHub: https://github.com/Cha-kurage/quiz-meikyuu (Private、`main`、`gh` は Cha-kurage でログイン済み)
 - コミットは3件。最新は `285c83f` (2026-11-17。凍結・判定ルール・壁・ベル・効果音・ボタン待ちの出題・進み具合・正解を並べるボタンまで) で、worktree のブランチ `claude/game-creation-continued-3bc8b8` にある。未 push・main へ未マージ。それ以降の作業 (タイマー) は未コミット。`パーツ類/` (元素材。`.ai` ファイルを含む) は本体側に未追跡のまま。コミットに含めるかはユーザーに確認すること。
 - 起動: プロジェクト直下で `python3 -m http.server 8001 --bind 127.0.0.1`。セッションをまたぐと止まるので、ユーザーに頼まれたら起動し直す。確認が終わっても、ユーザーが使っている8001番は止めない (以前、止めて「接続拒否」になった)。

@@ -7,7 +7,7 @@
 天狗が案内役を務める早押しクイズ形式の謎解きサイト。プレイヤーは15問のクイズに答え、
 解答ゾーンにパーツを配置して単語を組み立てながら最終謎の解答を目指す。
 
-仕様の元スライド: [Google Slides](https://docs.google.com/presentation/d/1nuHOdW2vCmclLUcJfhsuU5tnRIgITwCy/edit)
+仕様の元スライド: Google スライド (非公開。リンクは制作メンバーに確認)
 
 ## ディレクトリ構成
 
