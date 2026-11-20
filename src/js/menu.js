@@ -2,7 +2,7 @@
 // - メニュー: 「音量の調節」「説明をもう一度見る」「閉じる」
 // - 音量の調節: 本物の天狗の鼻 (180度回転) の上のつまみを左右に動かす。左が小さく、右が大きい (0〜100)。
 //   鼻の色は、小さいほど青、大きいほど赤 (間は紫)。開けるのはメニューからだけ。
-//   16問目だけは、鼻 (つまみ以外の所) をドラッグすると、鼻をパーツとして取り出せる (drag.js)。
+//   16問目だけは、鼻が真っ赤 (音量 100) のときに鼻 (つまみ以外の所) をドラッグすると、鼻をパーツとして取り出せる (drag.js)。
 //   鼻の左のベルは、ドラッグすると答えのパーツとして取り出せる (drag.js)。
 // - 音量はこのブラウザに覚えておく (次に開いたときも同じ音量)。保存できない環境では毎回 50 から。
 // 開閉は "volume:opened" / "volume:closed"、音量の変更は "volume:changed" で知らせる (tutorial.js が使う)。
@@ -22,6 +22,13 @@
   const BLUE_HUE_DEG = -120; // 赤 (0度) から色相を -120度 回すと青。間は紫を通る
 
   let volume = 50; // 0〜100
+  const NOSE_TAKE_VOLUME = 100; // 16問目: 鼻が真っ赤 (音量 100) のときだけ、鼻を取り出せる (2026-11-20 ユーザー指示)
+
+  // 鼻を取り出せるときは、鼻の上のカーソルを「掴める」にする
+  function refreshNoseTakeable() {
+    track.classList.toggle("nose-takeable", !inTutorial() && currentQuestionIndex === FINAL_INDEX &&
+      !isQuestionSolved(FINAL_INDEX) && volume >= NOSE_TAKE_VOLUME);
+  }
 
   // ---- 音量 ----
   function applyVolume(v, { save = true } = {}) {
@@ -33,6 +40,7 @@
     valueEl.textContent = String(volume);
     // 小さいほど青、大きいほど赤 (鼻はもともと赤いので、色相を回して青に寄せる)
     nose.style.filter = `hue-rotate(${BLUE_HUE_DEG * (1 - frac)}deg) saturate(${1 + 0.4 * (1 - frac)})`;
+    refreshNoseTakeable();
     if (save) {
       try { localStorage.setItem(VOLUME_KEY, String(volume)); } catch (_) { /* 保存できなくても動く */ }
     }
@@ -93,7 +101,7 @@
     refreshVolumeNose(); // main.js
     // チュートリアル中・16問目は、ベルを取り出せない。16問目は鼻を取り出せる (drag.js)
     document.getElementById("volume-bell").classList.toggle("locked", isTutorialLocked());
-    track.classList.toggle("nose-takeable", !inTutorial() && currentQuestionIndex === FINAL_INDEX && !isQuestionSolved(FINAL_INDEX));
+    refreshNoseTakeable();
     volumePanel.hidden = false;
     knob.focus({ preventScroll: true });
     document.dispatchEvent(new CustomEvent("volume:opened"));
@@ -104,6 +112,7 @@
     document.dispatchEvent(new CustomEvent("volume:closed"));
   }
   window.isVolumeOpen = () => !volumePanel.hidden;
+  window.getVolume = () => volume; // drag.js (鼻は音量 100 のときだけ取り出せる)
   window.closeVolume = closeVolume; // ベルを取り出したときに閉じる (drag.js)
   const isTutorialLocked = () => inTutorial() || currentQuestionIndex === FINAL_INDEX;
 

@@ -281,11 +281,13 @@
     onTap: () => playSound("bell"),
   });
 
-  // 16問目: 音量の画面の天狗の鼻 (つまみ以外の所) をドラッグすると、鼻を取り出せる。
+  // 16問目: 音量の画面の天狗の鼻 (つまみ以外の所) をドラッグすると、鼻を取り出せる (鼻が真っ赤のときだけ)。
   // ほかの問題や、つまみを押したときは、ふだんどおり音量を変える (menu.js)
   const volumeTrack = document.getElementById("volume-track");
   const nosePart = () => document.querySelector(".part.tengu-nose");
+  // 鼻が真っ赤 (音量 100) のときだけ (2026-11-20 ユーザー指示)。それ以外は鼻を押すと、ふだんどおり音量が変わる
   const noseTakeable = () => !inTutorial() && currentQuestionIndex === FINAL_INDEX && !isQuestionSolved(FINAL_INDEX) &&
+    getVolume() >= 100 &&
     !!nosePart() && nosePart().classList.contains("in-nose");
   pressToTake(volumeTrack, {
     pressable: (e) => noseTakeable() && !e.target.closest("#volume-knob"),
