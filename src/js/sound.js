@@ -56,7 +56,19 @@ function playQuestionSoundTwice() {
 }
 
 // ---- 風: 定期的に吹く。長い音源の中から、毎回ちがう場所を少しだけ流す ----
+// 風 (飾りの風のパーツ) を答えに使った後 (4問目 湘南乃風に正解した後) は、もう吹かない (2026-11-20 ユーザー指示)
+const windUsed = () => consumedBy["decor_wind"] !== undefined; // answers.js
+let windGust = null; // いま鳴っている風 { audio, timer }
+
+function stopWind() {
+  if (!windGust) return;
+  windGust.audio.pause();
+  clearInterval(windGust.timer);
+  windGust = null;
+}
+
 function blowWind() {
+  if (windUsed()) return;
   const a = playSound("wind", 0);
   if (!a) return;
   const peak = Math.min(1, masterVolume * WIND_VOLUME);
@@ -70,12 +82,17 @@ function blowWind() {
   const t0 = performance.now();
   const timer = setInterval(() => {
     const t = performance.now() - t0;
-    if (t >= WIND_PLAY_MS) { a.pause(); clearInterval(timer); return; }
+    if (t >= WIND_PLAY_MS) { a.pause(); clearInterval(timer); if (windGust && windGust.audio === a) windGust = null; return; }
     const fadeIn = Math.min(1, t / WIND_FADE_MS);
     const fadeOut = Math.min(1, (WIND_PLAY_MS - t) / WIND_FADE_MS);
     a.volume = peak * Math.max(0, Math.min(fadeIn, fadeOut));
   }, 50);
+  stopWind(); // 前の風が残っていたら止める
+  windGust = { audio: a, timer };
 }
+
+// 風を使って正解したら、吹いている途中の風も止める
+document.addEventListener("question:solved", () => { if (windUsed()) stopWind(); });
 
 // 最初にクリック・タップされてから吹き始める (それまでは自動再生の制限で鳴らせない)
 document.addEventListener("pointerdown", () => {
