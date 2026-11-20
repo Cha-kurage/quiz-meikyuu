@@ -15,15 +15,13 @@
       <span></span><span></span><span></span>
     </button>
 
-    <!-- 右上の音量ボタン (ベル) は、答えのパーツにも使うのでパーツとして置く (main.js の DECOR_LAYOUT の ui_bell) -->
-
     <!-- 9問目で背景から壁を取り出した跡。外の草原と鉄格子が見える (drag.js) -->
     <div id="wall-hole" hidden></div>
 
     <!-- 左: 出題ゾーン -->
     <section id="question-zone" aria-label="出題ゾーン">
       <div id="question-number"></div> <!-- 上に小さく出す問題番号 (常に表示) -->
-      <div id="question-counter"></div>
+      <div id="question-timer"></div>  <!-- 左上のタイマー。正解済みなら記録 (quiz.js) -->
       <div id="question-text"></div>
       <div id="question-status"></div>
     </section>
@@ -43,15 +41,66 @@
     <!-- パーツ (ステージ座標で配置。石板と解答ゾーンの上をドラッグで移動できる) -->
     <div id="parts-layer"></div>
 
-    <button id="submit-btn" type="button">これで解答</button>
+    <!-- 本編の答え: 偽天狗が早押しボタンの横に出て言う (quiz.js)。正解すると消える -->
+    <div id="answer-tengu" hidden>
+      <img src="assets/images/tengu/nise_tengu.png" alt="" draggable="false">
+      <div class="at-bubble"><div>答えは</div><div class="tut-answer"></div><div>だよ</div></div>
+    </div>
+
+    <button id="submit-btn" type="button">これで回答</button>
     <div id="answer-mark"></div>
     <div id="answer-result"></div>
 
-    <!-- 開発用: 表示中の問題の正解の配置に、パーツを一発で並べる (debug-solve.js) -->
+    <!-- チュートリアル: 偽天狗がしゃべる (tutorial.js) -->
+    <div id="tutorial" hidden>
+      <img id="tut-tengu" src="assets/images/tengu/nise_tengu.png" alt="案内役の天狗" draggable="false">
+      <div id="tut-bubble">
+        <div id="tut-text"></div>
+        <div id="tut-buttons">
+          <button id="tut-next" type="button">次へ ▶</button>
+          <!-- 「説明をもう一度見る」で聞くときだけ出す (tutorial.js) -->
+          <button id="tut-yes" type="button" hidden>はい</button>
+          <button id="tut-no" type="button" hidden>いいえ</button>
+        </div>
+      </div>
+      <!-- 「説明をとばす」は外した (2026-11-20 ユーザー指示。また使うかもしれないので残しておく)
+      <button id="tut-skip" type="button">説明をとばす</button>
+      -->
+    </div>
+
+    <!-- メニュー (左上の三本線で開く。menu.js) -->
+    <div id="menu-panel" class="overlay" hidden>
+      <div class="panel-box menu-box" role="dialog" aria-label="メニュー">
+        <div class="panel-title">メニュー</div>
+        <button class="menu-item" type="button" data-menu="volume">音量の調節</button>
+        <button class="menu-item" type="button" data-menu="tutorial">説明をもう一度見る</button>
+        <button class="menu-item menu-close" type="button" data-menu="close">閉じる</button>
+      </div>
+    </div>
+
+    <!-- 音量の調節: 天狗の鼻 (180度回転) の上のつまみを左右に動かす。小さいと青、大きいと赤 (menu.js) -->
+    <!-- 鼻の左のベルは、ドラッグすると答えのパーツとして取り出せる (main.js の renderVolumeBellPart / drag.js) -->
+    <div id="volume-panel" class="overlay" hidden>
+      <div class="panel-box volume-box" role="dialog" aria-label="音量の調節">
+        <div class="panel-title">音量</div>
+        <div id="volume-row">
+          <img id="volume-bell" src="assets/images/parts/illust_bell.png" alt="" draggable="false">
+          <div id="volume-track">
+            <img id="volume-nose" src="assets/images/tengu/tengu_nose.png" alt="" draggable="false">
+            <div id="volume-knob" role="slider" tabindex="0" aria-label="音量" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+        <div id="volume-value">50</div>
+        <button id="volume-close" class="menu-item menu-close" type="button">閉じる</button>
+      </div>
+    </div>
+
+    <!-- 開発用の「正解を並べる」「座標を調べる」は外した (2026-11-20 ユーザー指示)。
+         また使うときは、このコメントと下の script のコメントを外す
     <button id="debug-solve-btn" type="button">正解を並べる</button>
-    <!-- 開発用: 解答ゾーンに置いたパーツの座標(ゾーン内基準)と回転角を調べる -->
     <button id="debug-coords-btn" type="button">座標を調べる</button>
     <pre id="debug-coords-panel" hidden></pre>
+    -->
 
     <!-- 左下: 戻る / 右下: 進む -->
     <button id="prev-btn" class="nav-btn" type="button">◀ 戻る</button>
@@ -66,7 +115,11 @@
   <script src="src/js/drag.js"></script>
   <script src="src/js/answers.js"></script>
   <script src="src/js/quiz.js"></script>
+  <script src="src/js/menu.js"></script>
+  <script src="src/js/tutorial.js"></script>
+  <!-- 開発用 (今は外している。上のボタンと一緒にコメントを外すと使える)
   <script src="src/js/debug-coords.js"></script>
   <script src="src/js/debug-solve.js"></script>
+  -->
 </body>
 </html>

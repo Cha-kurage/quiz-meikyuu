@@ -55,40 +55,55 @@ body {
   color: #222;
 }
 
-/* 上に小さく出す問題番号 (常に表示。読み始めの大きい「n/15」が出ている間だけ隠す) */
+/* 上に小さく出す問題番号 (常に表示) */
 #question-number {
   position: absolute;
   left: 0;
   right: 0;
-  top: 14px;
+  top: 12px;
   text-align: center;
-  font-size: 30px;
+  font-size: 42px;
+  line-height: 1;
   color: #888;
   opacity: 0;
   transition: opacity .4s;
   pointer-events: none;
 }
 #question-number.show { opacity: 1; }
-
-/* 「1/15」表示 (出題の頭に出て、フェードアウトする) */
-#question-counter {
-  position: absolute;
-  inset: 0;
+/* 10問目の「10」: 黒字で、ドラッグするとパーツとして取り出せる */
+#question-number .num-take { color: #222; pointer-events: auto; cursor: grab; touch-action: none; }
+#question-number .num-take.taken { color: inherit; pointer-events: none; cursor: default; } /* 取った後は、ほかの問題と同じ灰色の「10」が残る */
+#question-number:not(.show) .num-take { pointer-events: none; }
+/* 取り出した「10」のパーツ (問題番号と同じ文字) */
+.part.num-part {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 130px;
-  opacity: 0;
-  transition: opacity .4s;
+  font-size: 42px;
+  line-height: 1;
+  color: #222;
+  user-select: none;
+}
+.part.num-part.in-number { display: none; }
+
+/* 左上のタイマー (出題開始から、早押しボタンで止まる)。正解済みの問題では赤字で「記録」。
+   右上は風の飾りがかぶるので左上に置く */
+#question-timer {
+  position: absolute;
+  left: 26px;
+  top: 22px; /* 問題番号 (42px) と縦の中心をそろえる */
+  font-size: 24px;
+  color: #888;
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
-#question-counter.show { opacity: 1; }
+#question-timer.recorded { color: #d33; }
 
 /* 問題文: 1文字 = 1em の升目に並べ、5文字ごとに改行 */
 #question-text {
   position: absolute;
   left: 50%;
-  top: 58px; /* 上の小さい問題番号の下から */
+  top: 66px; /* 上の小さい問題番号の下から */
   transform: translateX(-50%);
   font-size: 84px;
   line-height: 1.35;
@@ -106,7 +121,7 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  top: 414px;
+  top: 422px;
   text-align: center;
 }
 .q-countdown {
@@ -256,6 +271,7 @@ body {
   height: 186px;
   border: 6px solid #c9a24a; /* 黄土色 */
   border-radius: 24px;
+  background: rgba(255, 255, 255, .3); /* 中は半透明の白 (2026-11-20 ユーザー指示) */
 }
 
 /* 解答ゾーン右下の小さめボタン */
@@ -345,7 +361,7 @@ body {
 #prev-btn { left: 40px; }
 #next-btn { left: 1390px; }
 
-/* ---------- 左上メニュー / 右上ベル ---------- */
+/* ---------- 左上メニュー ---------- */
 .ui-btn {
   position: absolute;
   width: 76px;
@@ -373,19 +389,74 @@ body {
   background: #f1e9d8;
 }
 
-/* 右上のベル (音量ボタン) は、答えにも使うのでパーツとして置いている (main.js の DECOR_LAYOUT の ui_bell)。
-   ドラッグせずに押すと音量ボタンとして動く */
-.part[data-ui="volume"] { cursor: pointer; }
+/* 音量の画面のベルのパーツ: 音量の画面の中にあるとき (まだ取り出していない / 戻した) はステージに出さない */
+.part.ui-bell.in-volume { display: none; }
 
-/* ---------- 12問目: 正解の⭕から取り出す赤丸 ---------- */
-/* 解答済みの問題の⭕は、まだ赤丸を取り出していなければ掴める */
+/* ---------- 16問目 (最終問題): 白紙。問題番号・タイマー・ふつうのパーツは出さない ----------
+   早押しボタン (押しても反応しない)・「これで回答」・戻る/進むは残る。16問目用のパーツ (偽天狗・鼻) だけが出る */
+#stage.final #question-number,
+#stage.final #question-timer,
+#stage.final #buzzer-hint,
+#stage.final .part:not(.final-part),
+#stage.final #answer-mark { display: none; }
+#stage.final #buzzer-btn { cursor: default; }
+#stage:not(.final) .part.final-part { display: none; }
+/* 偽天狗はメニューの「説明をもう一度見る」の天狗から、鼻は音量の画面から取り出す。取り出すまでは見せない */
+.part.final-part.in-ask,
+.part.final-part.in-nose { display: none; }
+
+/* ---------- 本編の答え: 偽天狗が早押しボタンの横に出て「答えは / ○○ / だよ」と言う (quiz.js) ---------- */
+#answer-tengu {
+  position: absolute;
+  inset: 0;
+  z-index: 9000; /* パーツより手前、「これで回答」(10000) より後ろ */
+  pointer-events: none;
+}
+#answer-tengu[hidden] { display: none; }
+#answer-tengu img {
+  position: absolute;
+  left: 425px;
+  top: 597px;
+  height: 175px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5));
+}
+#answer-tengu .at-bubble {
+  position: absolute;
+  right: 1200px; /* 天狗のほうに右端をそろえ、長い答えは左へ伸ばす */
+  top: 528px; /* 問題文 (3行) の下から早押しボタンの上まで。答えの文字が出ていた所 */
+  min-width: 260px;
+  padding: 6px 18px;
+  border: 3px solid #333;
+  border-radius: 20px;
+  background: #fff;
+  color: #222;
+  font-size: 24px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#answer-tengu .at-bubble::before,
+#answer-tengu .at-bubble::after { content: ""; position: absolute; border-style: solid; border-color: transparent; }
+#answer-tengu .at-bubble::before { right: -22px; bottom: 20px; border-width: 12px 0 12px 22px; border-left-color: #333; }
+#answer-tengu .at-bubble::after { right: -17px; bottom: 23px; border-width: 9px 0 9px 18px; border-left-color: #fff; }
+#answer-tengu .tut-answer { color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.15; }
+/* 天狗が答えを言っている間は、早押しボタンの上の吹き出しは出さない (重なるので) */
+#stage.answer-told #buzzer-hint { display: none; }
+#answer-tengu.pop { animation: tengu-pop .35s ease-out; }
+@keyframes tengu-pop {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- 15問目: 正解の⭕から取り出す丸 (Quiz の Q) ---------- */
+/* 解答済みの問題の⭕は、まだ取り出していなければ掴める */
 #answer-mark.grabbable { pointer-events: auto; cursor: grab; touch-action: none; }
-.part.red-circle {
+.part.mark-circle {
   box-sizing: border-box;
-  border: 6px solid #e02020;
+  border: 10px solid #e02020; /* 正解の⭕と同じ赤 */
   border-radius: 50%;
 }
-.part.red-circle.in-mark { display: none; }
+.part.mark-circle.in-mark { display: none; }
 
 /* ---------- 9問目: 背景から取り出す壁 ---------- */
 /* 壁のパーツ (石のブロック)。背景の格子 1マス (128x64) と同じ大きさ */
@@ -417,3 +488,223 @@ body {
   pointer-events: none;
 }
 #wall-hole[hidden] { display: none; }
+
+/* ---------- メニュー・音量の調節 (menu.js) ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20000; /* 「これで回答」(10000) より手前 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .55);
+}
+.overlay[hidden] { display: none; }
+.panel-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-width: 440px;
+  padding: 28px 44px 32px;
+  border: 4px solid #c9a24a;
+  border-radius: 24px;
+  background: #2b2622;
+  color: #eee;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+}
+.panel-title { font-size: 36px; letter-spacing: .1em; }
+.menu-item {
+  width: 380px;
+  height: 64px;
+  border: 3px solid #c9a24a;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, .06);
+  color: #eee;
+  font: inherit;
+  font-size: 28px;
+  cursor: pointer;
+}
+.menu-item:hover { background: rgba(201, 162, 74, .3); }
+.menu-close { width: 240px; background: #c9a24a; color: #2b2622; }
+.menu-close:hover { background: #dbb75e; }
+
+/* 天狗の鼻 (180度回転) の上を、つまみが左右に動く。鼻の色は menu.js が filter で変える (小さいと青、大きいと赤) */
+/* 音量の画面は枠なしで小さめ (2026-11-20 ユーザー指示) */
+.volume-box { min-width: 0; border: 0; gap: 12px; padding: 20px 32px 24px; }
+.volume-box .panel-title { font-size: 28px; }
+.volume-box .menu-close { width: 180px; height: 48px; font-size: 22px; }
+#volume-row { display: flex; align-items: center; gap: 16px; }
+/* 鼻の左のベル: ドラッグすると答えのパーツとして取り出せる (drag.js)。取り出している間は空っぽ */
+#volume-bell {
+  width: 64px; /* main.js の VOLUME_BELL_SIZE と同じ */
+  height: 64px;
+  transform: rotate(-90deg); /* 90度左に回した向き (パーツも同じ向きで取り出す) */
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+#volume-bell.taken { visibility: hidden; }
+#volume-bell.locked { cursor: default; } /* チュートリアル中・15問目の後は取り出せない */
+#volume-track {
+  position: relative;
+  width: 280px;
+  height: 118px; /* 鼻の画像 648x272 と同じ比率 */
+  cursor: pointer;
+  touch-action: none;
+}
+#volume-nose.taken { visibility: hidden; } /* 16問目で鼻を取り出した後 */
+#volume-track.nose-takeable { cursor: grab; } /* 16問目は鼻を取り出せる */
+#volume-nose {
+  width: 100%;
+  height: 100%;
+  transform: rotate(180deg);
+  pointer-events: none;
+  user-select: none;
+}
+/* つまみ: 縦長の角丸四角 */
+#volume-knob {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #2b2622;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #a9a9a9, #fff 35%, #e4e4e4 65%, #a9a9a9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .55);
+  cursor: grab;
+}
+#volume-knob.dragging { cursor: grabbing; transform: translate(-50%, -50%) scale(1.08); }
+#volume-knob:focus-visible { outline: 4px solid #c9a24a; outline-offset: 4px; }
+#volume-value { font-size: 36px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* ---------- チュートリアル (tutorial.js) ---------- */
+/* 例題のパーツはチュートリアル中だけ。チュートリアル中は、ほかのパーツ (装飾の木・松明・風・ベルを除く)・戻る/進む・タイマーを隠す */
+#stage:not(.tutorial) .part.tut-part { display: none; }
+#stage.tutorial .part:not(.tut-part):not(.decor),
+#stage.tutorial .nav-btn,
+#stage.tutorial #question-timer { display: none; }
+/* 例題を流すセリフまでは「ボタンを押して出題」の吹き出しを出さない */
+#stage.tutorial:not(.tut-buzzer) #buzzer-hint { display: none; }
+
+#tutorial {
+  position: absolute;
+  inset: 0;
+  z-index: 25000; /* メニュー・音量の上にも吹き出しを出す (操作の説明を読みながら使えるように) */
+  pointer-events: none;
+}
+#tutorial[hidden] { display: none; }
+#tut-tengu {
+  position: absolute;
+  left: 30px;
+  bottom: 0;
+  height: 214px;
+  transform-origin: 50% 100%;
+  transition: left .6s ease-in-out, bottom .6s ease-in-out, height .6s ease-in-out;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5));
+  pointer-events: none;
+  user-select: none;
+}
+#tut-tengu.talking { animation: tengu-talk .32s ease-in-out infinite; }
+@keyframes tengu-talk {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-2deg); }
+}
+#tut-bubble {
+  position: absolute;
+  left: 232px;
+  right: 24px;
+  bottom: 8px;
+  min-height: 84px; /* 解答ゾーン (下端 792) に被らない大きさ (2026-11-20 ユーザー指示)。文字は大きめ */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 4px 14px 4px 24px;
+  border: 3px solid #333;
+  border-radius: 20px;
+  background: #fff;
+  color: #222;
+  pointer-events: auto;
+}
+/* しっぽ (天狗のほうを指す) */
+#tut-bubble::before,
+#tut-bubble::after {
+  content: "";
+  position: absolute;
+  top: 40px;
+  border-style: solid;
+  border-color: transparent;
+}
+#tut-bubble::before { left: -22px; border-width: 12px 22px 12px 0; border-right-color: #333; }
+#tut-bubble::after { left: -17px; border-width: 9px 18px 9px 0; border-right-color: #fff; }
+#tut-text {
+  flex: 1;
+  font-size: 31px;
+  line-height: 1.3;
+  white-space: pre-line;
+  cursor: default;
+}
+/* ボタンは「次へ」だけ (「前へ」は 2026-11-20 に外した) */
+#tut-buttons { display: flex; }
+#tut-buttons button {
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid #c9a24a;
+  border-radius: 24px;
+  background: #2b2622;
+  color: #f2e6c8;
+  font: inherit;
+  font-size: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#tut-buttons #tut-next { min-width: 128px; background: #c9a24a; color: #2b2622; }
+#tut-buttons button:disabled { opacity: .45; cursor: default; }
+#tut-buttons #tut-next:disabled { opacity: .7; background: #e8dcbc; }
+/* 例題の答え: 偽天狗が早押しボタンの横へ移動し、答えが出る位置あたりで「答えは 富士山 だよ」と言う (tutorial.js) */
+#tutorial.reveal #tut-tengu { left: 425px; bottom: 128px; height: 175px; }
+#tutorial.reveal #tut-bubble {
+  left: 110px;
+  right: auto;
+  top: 455px; /* 出題ゾーンで答えが出る位置 (#question-status) あたり。早押しボタンに被らない高さ */
+  bottom: auto;
+  width: 290px;
+  min-height: 0;
+  justify-content: center;
+  padding: 16px 20px;
+}
+#tutorial.reveal #tut-text { flex: none; font-size: 32px; line-height: 1.25; text-align: center; white-space: nowrap; }
+/* 「答えは / 富士山 / だよ」の答えの部分: 少し大きめの赤字 */
+#tut-text .tut-answer { color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.2; }
+#tutorial.reveal #tut-buttons { display: none; }
+/* しっぽは右 (天狗のほう) を指す */
+#tutorial.reveal #tut-bubble::before { left: auto; right: -22px; top: auto; bottom: 34px; border-width: 12px 0 12px 22px; border-color: transparent transparent transparent #333; }
+#tutorial.reveal #tut-bubble::after { left: auto; right: -17px; top: auto; bottom: 37px; border-width: 9px 0 9px 18px; border-color: transparent transparent transparent #fff; }
+/* 天狗が移動している間は、吹き出しを出さない */
+#tutorial.moving #tut-bubble { visibility: hidden; }
+
+/* 「もう一度チュートリアルを見るかい？」(メニューの「説明をもう一度見る」): はい / いいえ で答える */
+#tut-buttons #tut-yes,
+#tut-buttons #tut-no { min-width: 110px; }
+#tut-buttons #tut-yes { background: #c9a24a; color: #2b2622; }
+#tut-buttons [hidden] { display: none; }
+#tut-buttons { gap: 10px; }
+/* 16問目: 聞いてくる偽天狗をドラッグすると、パーツとして取り出せる (drag.js) */
+#tutorial.ask-final #tut-tengu { pointer-events: auto; cursor: grab; touch-action: none; }
+
+/* 例題の説明中、いま使っていないパーツは動かせない / 回答できないセリフでは「これで回答」を押せない */
+#stage.tutorial .part.tut-part.tut-still { cursor: default; }
+#stage.tut-no-submit #submit-btn { opacity: .5; cursor: default; }
+/* 押してほしいセリフまでは、早押しボタン・メニューを押せない (tutorial.js) */
+#stage.tut-no-buzzer #buzzer-btn,
+#stage.tut-no-menu #menu-btn { pointer-events: none; }
+
+/* セリフで指しているもの: 金色に光らせる */
+.tut-focus { animation: tut-glow 1.1s ease-in-out infinite; }
+@keyframes tut-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 210, 60, .9)) drop-shadow(0 0 10px rgba(255, 210, 60, .6)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 220, 80, 1)) drop-shadow(0 0 24px rgba(255, 200, 40, .9)); }
+}

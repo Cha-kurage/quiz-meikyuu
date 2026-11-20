@@ -11,19 +11,31 @@
 //   dy     : (b の y) - (a の y) が value に近いか (tol, px 以内。横位置は自由)
 //   closeX : a と b の x 座標の差が tol (px) 以内か (縦に並べる、のような「揃える」系の制約)
 //   closeY : a と b の y 座標の差が tol (px) 以内か (横に並べる、のような「揃える」系の制約)
-//   rot    : a の回転角が value 度か (value は 0/90/180/270。ダブルクリックで90度ずつ時計回りに回る)
+//   rot    : a の回転角が value 度か (value は 0/90/180/270。ダブルクリックで90度ずつ時計回りに回る)。[90, 270] のように並べると、どれか
 //   rotated: a が回転している (0度以外ならどの向きでも良い)
 //
 // required のパーツがすべて解答ゾーンにあり、rules をすべて満たせば正解。
 // ゾーンに required 以外のパーツが混ざっているときは不正解 (関係ないパーツは外してから解答する)。
 // 同じ file を2回使う答え (信楽焼の「木」など) は、required に "illust_tree#1", "illust_tree#2" のように
 // "#番号" を付けて書く。rules でもその名前で呼び分ける (file は # より前の部分)。
-// どちらのパーツでも良いもの (石板のベル / 右上の音量ボタンのベル) は "illust_bell|ui_bell" のように | で並べる。
+// どちらのパーツでも良いもの (石板のベル / 音量の画面のベル) は "illust_bell|ui_bell" のように | で並べる。
 // 同じ file のパーツが複数ゾーンにあるとき (の が2個、ン が4個など) は、どの1個を使っても良いので、
 // どれか1つの組み合わせでルールを満たせば正解にする。
 // ルールが無い(=キーが無い)問題は、まだ判定ロジックを用意していない問題。
 
 const ANSWER_CHECKS = {
+  [TUTORIAL_INDEX]: { // 例題 富士山: x が 富 < 士 < 山。士 = ＋ を ー の上に重ねる (x がそろっている)。山 は元の向き (0度)
+    required: ["tut_fu", "tut_plus", "tut_bar", "tut_yama"],
+    rules: [
+      { type: "ltX", a: "tut_fu", b: "tut_plus" },
+      { type: "ltX", a: "tut_fu", b: "tut_bar" },
+      { type: "closeX", a: "tut_plus", b: "tut_bar", tol: 50 },
+      { type: "ltY", a: "tut_plus", b: "tut_bar" },
+      { type: "ltX", a: "tut_plus", b: "tut_yama" },
+      { type: "ltX", a: "tut_bar", b: "tut_yama" },
+      { type: "rot", a: "tut_yama", value: 0 },
+    ],
+  },
   0: { // Q1 たぬき: 単体イラストなので置く位置はどこでも良い
     required: ["illust_tanuki"],
     rules: [],
@@ -74,12 +86,13 @@ const ANSWER_CHECKS = {
       { type: "ltX", a: "kata_ya", b: "illust_tree#2" },
     ],
   },
-  7: { // Q8 ９: 単体パーツなので置く位置はどこでも良い (元スライドの使用パーツも「９」のみ)
+  7: { // Q8 ９: 単体パーツなので置く位置はどこでも良い (元スライドの使用パーツも「９」のみ)。
+    // 「９」は石板で90度左に回してあるので、元の向き (0度) に戻して置く (ユーザー指定 2026-11-20)
     required: ["digit_9"],
-    rules: [],
+    rules: [{ type: "rot", a: "digit_9", value: 0 }],
   },
   8: { // Q9 ベルリンの壁: x が ベル < リ < ン < の < 壁 の順。壁は9問目だけ、背景をドラッグして取り出せる (drag.js)。
-    // ベルは石板のベル・右上の音量ボタンのベルのどちらでも良い (もう片方は11問目で使う)
+    // ベルは石板のベル・音量の画面 (メニュー) のベルのどちらでも良い (もう片方は11問目で使う)
     required: ["illust_bell|ui_bell", "kata_ri", "kata_n", "hira_no", "wall"],
     rules: [
       { type: "ltX", a: "illust_bell|ui_bell", b: "kata_ri" },
@@ -88,9 +101,9 @@ const ANSWER_CHECKS = {
       { type: "ltX", a: "hira_no", b: "wall" },
     ],
   },
-  9: { // Q10 １０ (テン): 読点「、」(テン) 1つ。置く位置・向きは自由 (ユーザー指定 2026-11-16)。
-    // 「、」は元スライドでは15問目 (、uZi) 用だったので、15問目を作るときは別の形を考える
-    required: ["punct_comma"],
+  9: { // Q10 １０: 問題番号「10/15」の「10」を取り出して置く (ユーザー指定 2026-11-17)。位置は自由。
+    // 「10」は10問目だけ、問題番号の黒字の「10」をドラッグすると取れる (drag.js)
+    required: ["num_10"],
     rules: [],
   },
   10: { // Q11 ティンカーベル: x が テ < ィ < ン < 車(カー) < ベル の順。ベルはどちらでも良い
@@ -102,28 +115,45 @@ const ANSWER_CHECKS = {
       { type: "ltX", a: "illust_car", b: "illust_bell|ui_bell" },
     ],
   },
-  11: { // Q12 ルパン: x が ル < ハ < ン の順。ハ の右上に赤丸 (゜) を置いて パ にする (ユーザー指定 2026-11-17)。
-    // 赤丸は、前の問題 (解答済み) の⭕をドラッグして石板に持っていくと取れる (drag.js)。
-    // 「右上」は、赤丸の中心が ハ の中心より右かつ上で、ン の中心より左にあることで見る
-    required: ["kata_ru", "kata_ha", "red_circle", "kata_n"],
+  11: { // Q12 ルパン: x が ル < ハ < ン の順。ハ の右上に ◯ (゜) を置いて パ にする (ユーザー指定 2026-11-17)。
+    // ◯ は石板の赤い記号の列にあるパーツ (symbol_circle)。
+    // 「右上」は、◯ の中心が ハ の中心より右かつ上で、ン の中心より左にあることで見る
+    required: ["kata_ru", "kata_ha", "symbol_circle", "kata_n"],
     rules: [
       { type: "ltX", a: "kata_ru", b: "kata_ha" },
       { type: "ltX", a: "kata_ha", b: "kata_n" },
-      { type: "ltX", a: "kata_ha", b: "red_circle" },
-      { type: "ltY", a: "red_circle", b: "kata_ha" },
-      { type: "ltX", a: "red_circle", b: "kata_n" },
+      { type: "ltX", a: "kata_ha", b: "symbol_circle" },
+      { type: "ltY", a: "symbol_circle", b: "kata_ha" },
+      { type: "ltX", a: "symbol_circle", b: "kata_n" },
     ],
   },
-  12: { // Q13 ひまわり: 松明(ひ = 火)を回転させて (まわ) その右に り を置く → ひ・まわ・り。松明の向きは0度以外なら良い
-    required: ["decor_torch", "hira_ri"],
-    rules: [
-      { type: "rotated", a: "decor_torch" },
-      { type: "ltX", a: "decor_torch", b: "hira_ri" },
-    ],
+  12: { // Q13 ひまわり: 松明 (ひ = 火) と 回る矢印 (まわり) の2つが置いてあれば正解。向き・位置は問わない (ユーザー指定 2026-11-20)
+    required: ["decor_torch", "illust_arrows"],
+    rules: [],
+  },
+  [FINAL_INDEX]: { // Q16 (最終問題) 天狗: 偽天狗 (メニューの「説明をもう一度見る」で出てくる) と、音量の画面の天狗の鼻。
+    // 2つとも解答ゾーンにあれば正解。置く順番・位置は問わない (ユーザー指定 2026-11-20)
+    required: ["nise_tengu", "tengu_nose"],
+    rules: [],
   },
   13: { // Q14 モナ・リザ: 単体イラスト。この問題の後も石板に 、uZi だけが残る (最終問題用) ので、他のパーツは使わない
     required: ["illust_monalisa"],
     rules: [],
+  },
+  14: { // Q15 Quiz (あなたはいまなにをしているか？): Q = 正解の⭕ (取り出したもの) + 「、」を右下に、
+    // u = n を180度、i = ！を180度、z = N を90度 (どちら向きでも)。x が Q < u < i < z の順 (ユーザー指定 2026-11-17)。
+    // ⭕は、解答済みの問題に戻って⭕をドラッグし、石板に置くと取れる (drag.js)
+    required: ["answer_circle", "punct_comma", "latin_n_lower", "punct_exclam", "latin_N"],
+    rules: [
+      { type: "ltX", a: "answer_circle", b: "punct_comma" },
+      { type: "ltY", a: "answer_circle", b: "punct_comma" },
+      { type: "ltX", a: "punct_comma", b: "latin_n_lower" },
+      { type: "ltX", a: "latin_n_lower", b: "punct_exclam" },
+      { type: "ltX", a: "punct_exclam", b: "latin_N" },
+      { type: "rot", a: "latin_n_lower", value: 180 },
+      { type: "rot", a: "punct_exclam", value: 180 },
+      { type: "rot", a: "latin_N", value: [90, 270] },
+    ],
   },
 };
 
@@ -137,9 +167,18 @@ function isInAnswerZone(el) {
 }
 
 // 判定・凍結の対象になるパーツ: 解答ゾーンの中にあって、いま見えていて、まだ凍結されていないもの
+// チュートリアル中は例題のパーツだけ、16問目は16問目用のパーツ (偽天狗・鼻) だけ、ふだんはそれ以外を見る
 function partsInAnswerZone() {
+  const tutorial = inTutorial();
+  const final = !tutorial && currentQuestionIndex === FINAL_INDEX;
   return allParts().filter((el) =>
-    !el.classList.contains("is-hidden") && !el.classList.contains("frozen") && isInAnswerZone(el));
+    !el.classList.contains("is-hidden") && !el.classList.contains("frozen") &&
+    el.classList.contains("tut-part") === tutorial && el.classList.contains("final-part") === final &&
+    isInAnswerZone(el));
+}
+
+function inTutorial() {
+  return stage.classList.contains("tutorial");
 }
 
 function ruleHolds(rule, byFile) {
@@ -152,7 +191,7 @@ function ruleHolds(rule, byFile) {
     case "dy": return Math.abs((b.y - a.y) - rule.value) <= rule.tol;
     case "closeX": return Math.abs(b.x - a.x) <= rule.tol;
     case "closeY": return Math.abs(b.y - a.y) <= rule.tol;
-    case "rot": return (((a.rot % 360) + 360) % 360) === rule.value;
+    case "rot": return [].concat(rule.value).includes(((a.rot % 360) + 360) % 360); // value は数か、数の配列 (どれか)
     case "rotated": return (((a.rot % 360) + 360) % 360) !== 0;
     default: return false;
   }
@@ -205,7 +244,7 @@ function checkAnswer(index) {
 // - 未解答の問題: ゾーンに置いたパーツは、問題を切り替えてもそのまま残り、石板には戻らない。
 //   石板へ戻すには、ゾーンの外へドラッグして放す (ゾーン外で放すと元の位置に戻る: drag.js)。
 // - 正解した問題: 正解に使ったパーツを凍結して、その問題のゾーンを凍結する
-//   (パーツは動かせない・回転できない。「これで解答」も押せない。新しいパーツも置けない)。
+//   (パーツは動かせない・回転できない。「これで回答」も押せない。新しいパーツも置けない)。
 //   ゾーンにあった正解以外のパーツは、使用済みにならず未使用のまま残る
 //   (先に置いておいた次の問題のパーツが、巻き込まれて使えなくなるのを防ぐ)。
 // - 凍結したパーツは使用済みで、石板にも他の問題の画面にも戻らない。
@@ -228,28 +267,28 @@ function hideMark() {
   markEl.classList.remove("show", "circle", "cross", "grabbable");
 }
 
-// ---- ⭕から赤丸を取り出す (12問目ルパンの「゜」) ----
-// 取り出せる赤丸は1つだけ。取り出した問題の⭕は、それ以降その問題では出さない。
-let circleTakenFrom = null; // 赤丸を取り出した問題の番号 (取り出していなければ null)
+// ---- 正解の⭕を取り出す (15問目「Quiz」の Q の丸) ----
+// 解答済みの問題の⭕はドラッグでき、石板の上で放すとパーツになる (drag.js)。
+// 一度取り出したら、⭕はもうどこにも出ない (正解しても音だけ)。
+let markCircleTaken = false;
 
-// 解答済みの問題で⭕を出す。まだ赤丸を取り出していなければ、⭕を掴めるようにする
-function showSolvedMark(index) {
-  if (index === circleTakenFrom) return;
+// 解答済みの問題で⭕を出す (取り出した後は出さない)。⭕は掴める
+function showSolvedMark() {
+  if (markCircleTaken) return;
   markEl.classList.add("circle", "show");
-  const circle = document.querySelector(".part.red-circle");
-  markEl.classList.toggle("grabbable", circleTakenFrom === null && !!circle && circle.classList.contains("in-mark"));
+  markEl.classList.toggle("grabbable", !inTutorial()); // チュートリアルの例題の⭕は取り出せない
 }
 
-// drag.js から: ⭕を掴んだ (赤丸のパーツとして取り出した)
-function takeCircleMark(index) {
-  circleTakenFrom = index;
+// drag.js から: ⭕を掴んだ (パーツとして取り出した)
+function takeMarkCircle() {
+  markCircleTaken = true;
   hideMark();
 }
 
-// drag.js から: 石板まで持っていかずに放したので、赤丸を⭕に戻す
-function restoreCircleMark() {
-  circleTakenFrom = null;
-  if (isQuestionSolved(currentQuestionIndex)) showSolvedMark(currentQuestionIndex);
+// drag.js から: 石板まで持っていかずに放したので、⭕に戻す
+function restoreMarkCircle() {
+  markCircleTaken = false;
+  if (isQuestionSolved(currentQuestionIndex)) showSolvedMark();
 }
 
 // 表示する問題に合わせて、パーツの表示/非表示と凍結状態を切り替える
@@ -283,10 +322,11 @@ function isQuestionSolved(index) {
 function prepareAnswerZone(index) {
   hideMark();
   showQuestionZone(index);
-  if (index in solvedParts) showSolvedMark(index); // 解答済み: ⭕は消さずに出しておく
+  if (index in solvedParts) showSolvedMark(); // 解答済み: ⭕は消さずに出しておく (取り出した後は出さない)
 }
 
 submitBtn.addEventListener("click", () => {
+  if (inTutorial() && !tutorialAllowsSubmit()) return; // チュートリアルで、まだ回答するセリフではないとき (tutorial.js)
   const matched = matchAnswer(currentQuestionIndex);
   hideMark();
   clearTimeout(resultHideTimer);
@@ -295,8 +335,8 @@ submitBtn.addEventListener("click", () => {
   playSound(matched ? "correct" : matched === null ? "incorrect" : "click");
   if (matched) {
     freezeAnswerZone(currentQuestionIndex, matched);
-    markEl.classList.add("circle");
-    requestAnimationFrame(() => showSolvedMark(currentQuestionIndex));
+    document.dispatchEvent(new CustomEvent("question:solved", { detail: { index: currentQuestionIndex } })); // quiz.js がタイマーの記録をとる
+    requestAnimationFrame(() => showSolvedMark()); // ⭕を取り出した後は、⭕は出さず正解の音だけ
     // 正解は自動で消さない
   } else if (matched === null) {
     markEl.classList.add("cross");

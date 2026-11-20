@@ -1,6 +1,6 @@
 // 開発用ツール:「正解を並べる」ボタンで、表示中の問題の正解の配置に、パーツを一発で並べる。
-// ゾーンにある関係ないパーツは元の場所へ戻す。並べるだけで、「これで解答」は押さない。
-// 9問目の壁・12問目の赤丸のように、ふつうは取り出す操作が要るパーツも、ここではそのまま取り出して使う。
+// ゾーンにある関係ないパーツは元の場所へ戻す。並べるだけで、「これで回答」は押さない。
+// 9問目の壁・10問目の「10」・15問目の⭕の丸・音量の画面のベルのように、ふつうは取り出す操作が要るパーツも、ここではそのまま取り出して使う。
 // 判定ルールを変えたら、ここの配置も answers.js の ANSWER_CHECKS に合うように直すこと。
 
 (() => {
@@ -12,6 +12,12 @@
   const Y = 87; // ゾーンの内側 (高さ174) の縦の中央
   const row = (files) => files.map((file, i) => ({ file, x: 110 + 150 * i, y: Y }));
   const SOLUTIONS = {
+    [TUTORIAL_INDEX]: [
+      { file: "tut_fu", x: 150, y: Y },
+      { file: "tut_plus", x: 300, y: 50 },
+      { file: "tut_bar", x: 300, y: 125 },
+      { file: "tut_yama", x: 450, y: Y, rot: 0 },
+    ],
     0: [{ file: "illust_tanuki", x: 440, y: Y }],
     1: row(["hira_ki", "hira_no", "hira_ko"]),
     2: [
@@ -23,26 +29,33 @@
     4: row(["kata_n", "kanji_rei", "kata_shi", "kanji_kan"]),
     5: [{ file: "kata_to", x: 440, y: Y, rot: 90 }],
     6: row(["illust_shiga", "kata_ra", "illust_tree", "kata_ya", "illust_tree"]),
-    7: [{ file: "digit_9", x: 440, y: Y }],
+    7: [{ file: "digit_9", x: 440, y: Y, rot: 0 }],
     8: row(["illust_bell|ui_bell", "kata_ri", "kata_n", "hira_no", "wall"]),
-    9: [{ file: "punct_comma", x: 440, y: Y }],
+    9: [{ file: "num_10", x: 440, y: Y }],
     10: row(["kata_te", "kata_small_i", "kata_n", "illust_car", "illust_bell|ui_bell"]),
     11: [
       { file: "kata_ru", x: 120, y: 100 },
       { file: "kata_ha", x: 250, y: 100 },
-      { file: "red_circle", x: 306, y: 44 },
+      { file: "symbol_circle", x: 306, y: 44 },
       { file: "kata_n", x: 400, y: 100 },
     ],
     12: [
-      { file: "decor_torch", x: 200, y: Y, rot: 90 },
-      { file: "hira_ri", x: 360, y: Y },
+      { file: "decor_torch", x: 200, y: Y },
+      { file: "illust_arrows", x: 360, y: Y },
     ],
     13: [{ file: "illust_monalisa", x: 440, y: Y }],
+    14: [
+      { file: "answer_circle", x: 120, y: 80 },
+      { file: "punct_comma", x: 165, y: 128 },
+      { file: "latin_n_lower", x: 250, y: 100, rot: 180 },
+      { file: "punct_exclam", x: 330, y: 100, rot: 180 },
+      { file: "latin_N", x: 410, y: 100, rot: 90 },
+    ],
   };
 
-  // 赤丸・壁を取り出したことにするときの置き場所 (ステージ座標)
-  const RED_CIRCLE_HOME = { x: 1436, y: 520 }; // 石板の右下のすき間
-  const WALL_HOLE_AT = { x: 330, y: 850 };     // 左下の背景
+  // 壁を取り出したことにするときの、取り出した跡の位置 (ステージ座標。左下の背景)
+  const WALL_HOLE_AT = { x: 330, y: 850 };
+  const MARK_CIRCLE_HOME = { x: 1420, y: 525 }; // ⭕の丸を取り出したことにするときの、石板の上の置き場所 (右下)
 
   let msgTimer = null;
   function say(text) {
@@ -69,8 +82,31 @@
   // まだ使っていない (どの問題の正解にも使われていない) パーツ
   const usable = (el) => !el.classList.contains("frozen") && consumedBy[el.dataset.partId] === undefined;
 
-  // 壁・赤丸は、ふだんの取り出す操作をしたことにして使えるようにする
+  // 壁・「10」・⭕の丸は、ふだんの取り出す操作 (9問目で背景 / 10問目で問題番号 / 解答済みの⭕をドラッグ) をしたことにして使えるようにする
   function takeOut(el) {
+    if (el.classList.contains("num-part") && el.classList.contains("in-number")) {
+      const span = document.querySelector("#question-number .num-take");
+      const r = span.getBoundingClientRect();
+      const s = stage.getBoundingClientRect();
+      const scale = s.width / STAGE_W;
+      el.dataset.homeX = (r.left + r.width / 2 - s.left) / scale;
+      el.dataset.homeY = (r.top + r.height / 2 - s.top) / scale;
+      el.classList.remove("in-number");
+      refreshQuestionNumber();
+    }
+    if (el.classList.contains("mark-circle") && el.classList.contains("in-mark")) {
+      el.classList.remove("in-mark");
+      delete el.dataset.fresh;
+      el.dataset.homeX = MARK_CIRCLE_HOME.x;
+      el.dataset.homeY = MARK_CIRCLE_HOME.y;
+      takeMarkCircle();
+    }
+    if (el.classList.contains("ui-bell") && el.classList.contains("in-volume")) {
+      el.classList.remove("in-volume");
+      el.dataset.homeX = VOLUME_BELL_HOME.x;
+      el.dataset.homeY = VOLUME_BELL_HOME.y;
+      refreshVolumeBell();
+    }
     if (el.classList.contains("wall") && el.classList.contains("in-wall")) {
       el.classList.remove("in-wall");
       el.dataset.homeX = WALL_HOLE_AT.x;
@@ -79,13 +115,6 @@
       hole.style.left = `${WALL_HOLE_AT.x}px`;
       hole.style.top = `${WALL_HOLE_AT.y}px`;
       hole.hidden = false;
-    }
-    if (el.classList.contains("red-circle") && el.classList.contains("in-mark")) {
-      el.classList.remove("in-mark");
-      delete el.dataset.fresh;
-      el.dataset.homeX = RED_CIRCLE_HOME.x;
-      el.dataset.homeY = RED_CIRCLE_HOME.y;
-      if (circleTakenFrom === null) circleTakenFrom = -1; // どの問題の⭕からでもなく取り出した
     }
   }
 

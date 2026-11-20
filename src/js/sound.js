@@ -11,11 +11,11 @@ const SOUND_FILES = {
   incorrect: "incorrect1.mp3", // クイズ不正解1
   click: "decision31.mp3",     // 決定ボタンを押す31 (戻る/進む/メニューなどのボタン)
   buzzer: "quiz-button2.mp3",  // クイズ早押しボタン2
-  bell: "tirin1.mp3",          // チリン (右上のベル = 音量ボタンを押したとき)
+  bell: "tirin1.mp3",          // チリン (音量を変えたとき / 音量の画面のベルを押したとき)
   wind: "wind1.mp3",           // 風が吹く1 (約105秒。定期的に一部分だけ流す)
 };
 
-let masterVolume = 0.5; // 音量。元スライドの初期設定 50。音量ページができたら、そこから変える
+let masterVolume = 0.5; // 音量 (0〜1)。元スライドの初期設定 50。menu.js の音量調節 (天狗の鼻) で変える
 
 const QUESTION_ECHO_MS = 160; // 出題音の「2重」: 1回目からこれだけ遅らせて、もう1回重ねて鳴らす
 
@@ -45,6 +45,14 @@ function playSound(name, volume = 1) {
 function playQuestionSound() {
   playSound("question");
   setTimeout(() => playSound("question"), QUESTION_ECHO_MS);
+}
+
+// 1問目だけは「デデン！デデン！」と2回続けて鳴らす (2026-11-20 ユーザー指示)。
+// 「デデン」は音源の最初の約0.55秒なので、鳴り終わるころに2回目を鳴らす
+const QUESTION_REPEAT_MS = 650;
+function playQuestionSoundTwice() {
+  playSound("question");
+  setTimeout(() => playSound("question"), QUESTION_REPEAT_MS);
 }
 
 // ---- 風: 定期的に吹く。長い音源の中から、毎回ちがう場所を少しだけ流す ----
@@ -77,4 +85,3 @@ document.addEventListener("pointerdown", () => {
 
 // ---- ボタンの音 ----
 document.getElementById("menu-btn").addEventListener("click", () => playSound("click"));
-document.addEventListener("volume:press", () => playSound("bell")); // 音量ページは未実装。今はベルが鳴るだけ
