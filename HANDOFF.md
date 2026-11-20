@@ -37,7 +37,7 @@
 ## 2. リポジトリ・環境
 - 作業フォルダ: デスクトップの `karakara/からのもぬけ/web_クイズなぞ` (2026-11-06 に移動。旧: `karakara/web_クイズなぞ`)
 - GitHub: https://github.com/Cha-kurage/quiz-meikyuu (Private、`main`、`gh` は Cha-kurage でログイン済み)
-- コミットは3件。最新は `285c83f` (2026-11-17。凍結・判定ルール・壁・ベル・効果音・ボタン待ちの出題・進み具合・正解を並べるボタンまで) で、worktree のブランチ `claude/game-creation-continued-3bc8b8` にある。未 push・main へ未マージ。それ以降の作業 (タイマー) は未コミット。`パーツ類/` (元素材。`.ai` ファイルを含む) は本体側に未追跡のまま。コミットに含めるかはユーザーに確認すること。
+- **公開中** (2026-11-20 ユーザー指示): リポジトリ `Cha-kurage/quiz-meikyuu` を **Public** にし、GitHub Pages (main ブランチのルート) で https://cha-kurage.github.io/quiz-meikyuu/ に公開した。main に push すると1分ほどでサイトに反映される。公開リポジトリなので、Mac のパス・元スライドのリンクなどの内部情報は書かないこと。コミットは worktree のブランチ `claude/game-creation-continued-3bc8b8` で作り、`git push origin HEAD:main` で main に反映している。`パーツ類/` (元素材) もリポジトリに入れた (ユーザー確認済み)。
 - 起動: プロジェクト直下で `python3 -m http.server 8001 --bind 127.0.0.1`。セッションをまたぐと止まるので、ユーザーに頼まれたら起動し直す。確認が終わっても、ユーザーが使っている8001番は止めない (以前、止めて「接続拒否」になった)。
 - 2026-10-22 時点: **8001番 (メイン側の古いコード) はユーザーの依頼で止めた**。worktree の確認用に 8011番を立てたまま (`python3 -m http.server 8011 --bind 127.0.0.1`、worktree 直下)。
 - 2026-11-16 時点: 8011番はフォルダ移動の後、プロセスは残っているが 404 しか返さない (止めようとしたら権限で拒否されたので放置)。**今の確認用は 8012番** (worktree 直下で `python3 -m http.server 8012 --bind 127.0.0.1`、http://127.0.0.1:8012/)。
