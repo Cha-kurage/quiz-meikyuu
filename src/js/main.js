@@ -193,7 +193,7 @@ function refreshVolumeBell() {
 // どちらも石板か解答ゾーンに置ける。それ以外で放すと元 (天狗 / 音量の画面) に戻る。
 // 絵の縦横比が正方形でないので、data-aspect (幅/高さ) を持たせ、大きさは高さで扱う (drag.js)
 const FINAL_PARTS = [
-  { file: "nise_tengu", origin: "ask", cls: "nise-tengu in-ask", src: "assets/images/tengu/nise_tengu.png", aspect: 954 / 1061, size: 214, zoneSize: 150, rot: 0 },
+  { file: "nise_tengu", origin: "ask", cls: "nise-tengu roam in-ask", src: "assets/images/tengu/nise_tengu.png", aspect: 954 / 1061, size: 214, zoneSize: 150, rot: 0 },
   { file: "tengu_nose", origin: "nose", cls: "tengu-nose in-nose", src: "assets/images/tengu/tengu_nose.png", aspect: 432 / 272, size: 118, zoneSize: 76, rot: 180 },
 ];
 

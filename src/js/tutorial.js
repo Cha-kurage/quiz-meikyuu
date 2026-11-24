@@ -4,7 +4,7 @@
 // waitFor があるセリフは、その操作をするまで先へ進めない (できたら少し待って自動で次へ)。
 // ページを開くと最初に始まる。メニューの「説明をもう一度見る」では、まず偽天狗が「もう一度チュートリアルを見るかい？」と聞き、
 // 「はい」で始まる (終わると元の問題に戻る)。「いいえ」なら天狗は引っ込む。
-// 16問目で聞いてきた偽天狗は、ドラッグするとパーツとして取り出せる (最終問題「天狗」の答えに使う: drag.js)。
+// 聞いてきた偽天狗は、ドラッグするとパーツとして取り出せる (どの問題でも。最終問題「天狗」の答えに使う: drag.js)。
 
 (() => {
   const root = document.getElementById("tutorial");
@@ -265,7 +265,9 @@
     clearFocus();
     root.hidden = false;
     root.classList.add("ask");
-    root.classList.toggle("ask-final", !active && currentQuestionIndex === FINAL_INDEX); // 16問目は天狗を掴める
+    // 聞いてくる偽天狗は掴める (どの問題でも。チュートリアルの途中と、もう取り出してあるときは除く)
+    const tenguPart = document.querySelector(".part.nise-tengu");
+    root.classList.toggle("ask-final", !active && !!tenguPart && tenguPart.classList.contains("in-ask"));
     nextBtn.hidden = true;
     yesBtn.hidden = false;
     noBtn.hidden = false;

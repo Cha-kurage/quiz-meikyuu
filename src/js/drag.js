@@ -297,10 +297,11 @@
     onTake: () => { refreshVolumeNose(); closeVolume(); },
   });
 
-  // 16問目: 「説明をもう一度見る」で出てきた偽天狗をドラッグすると、偽天狗を取り出せる
+  // 「説明をもう一度見る」で出てきた偽天狗をドラッグすると、偽天狗を取り出せる (どの問題でも)
   const askTengu = document.getElementById("tut-tengu");
   const tenguPart = () => document.querySelector(".part.nise-tengu");
-  const tenguTakeable = () => isTutorialAsking() && currentQuestionIndex === FINAL_INDEX && !isQuestionSolved(FINAL_INDEX) &&
+  // 16問目に限らず、どの問題でも取り出せる (2026-11-24 ユーザー指示)。取り出した偽天狗は、ほかのパーツと同じに扱う
+  const tenguTakeable = () => isTutorialAsking() && !inTutorial() && !isQuestionSolved(FINAL_INDEX) &&
     !!tenguPart() && tenguPart().classList.contains("in-ask");
   pressToTake(askTengu, {
     pressable: tenguTakeable,

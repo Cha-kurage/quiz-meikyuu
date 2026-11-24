@@ -400,7 +400,8 @@ body {
 #stage.final .part:not(.final-part),
 #stage.final #answer-mark { display: none; }
 #stage.final #buzzer-btn { cursor: default; }
-#stage:not(.final) .part.final-part { display: none; }
+/* 偽天狗 (roam) は16問目より前でも取り出せるので、取り出した後はどの問題でも見える (2026-11-24 ユーザー指示)。鼻は16問目だけ */
+#stage:not(.final) .part.final-part:not(.roam) { display: none; }
 /* 偽天狗はメニューの「説明をもう一度見る」の天狗から、鼻は音量の画面から取り出す。取り出すまでは見せない */
 .part.final-part.in-ask,
 .part.final-part.in-nose { display: none; }
@@ -692,7 +693,7 @@ body {
 #tut-buttons #tut-yes { background: #c9a24a; color: #2b2622; }
 #tut-buttons [hidden] { display: none; }
 #tut-buttons { gap: 10px; }
-/* 16問目: 聞いてくる偽天狗をドラッグすると、パーツとして取り出せる (drag.js) */
+/* 「もう一度見るかい？」と聞いてくる偽天狗は、ドラッグするとパーツとして取り出せる (drag.js。どの問題でも) */
 #tutorial.ask-final #tut-tengu { pointer-events: auto; cursor: grab; touch-action: none; }
 
 /* 例題の説明中、いま使っていないパーツは動かせない / 回答できないセリフでは「これで回答」を押せない */

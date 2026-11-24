@@ -175,7 +175,8 @@ function partsInAnswerZone() {
   const final = !tutorial && currentQuestionIndex === FINAL_INDEX;
   return allParts().filter((el) =>
     !el.classList.contains("is-hidden") && !el.classList.contains("frozen") &&
-    el.classList.contains("tut-part") === tutorial && el.classList.contains("final-part") === final &&
+    el.classList.contains("tut-part") === tutorial &&
+    (final ? el.classList.contains("final-part") : !el.classList.contains("final-part") || el.classList.contains("roam")) &&
     isInAnswerZone(el));
 }
 
