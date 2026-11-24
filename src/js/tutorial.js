@@ -69,7 +69,7 @@
     { text: "ただし、正しい配置で回答しないと不正解になるから注意してね" },
     { text: "まずは「富」をドラッグして、解答ゾーンに置いてみよう", focus: ['.part[data-file="tut_fu"]', "#answer-zone"], waitFor: "fuPlaced", movable: ["tut_fu"] },
     { text: "次に「＋」と「ー」を、「士」の形になるように上下に重ねて、\n「富」の右に置こう", focus: ['.part[data-file="tut_plus"]', '.part[data-file="tut_bar"]'], waitFor: "shiPlaced", movable: ["tut_plus", "tut_bar"] },
-    { text: "最後に「山」。今は逆さまだね。パーツをダブルクリックすると\n90度回るから、2回ダブルクリックして元の向きにして、「士」の右に置こう", focus: ['.part[data-file="tut_yama"]'], waitFor: "yamaPlaced", movable: ["tut_yama"] },
+    { text: "最後に「山」。今は逆さまだね。パーツをダブルタップすると\n90度回るから、2回ダブルタップして元の向きにして、「士」の右に置こう", focus: ['.part[data-file="tut_yama"]'], waitFor: "yamaPlaced", movable: ["tut_yama"] },
     { text: "これで「富士山」の完成！\n「これで回答」を押そう", focus: ["#submit-btn"], waitFor: "solved", submit: true },
     { text: "⭕が出て正解の音が鳴れば、君の回答は正解だということだ" },
     { text: "もし❌が出て不正解の音が鳴ったら、\nその回答で正しいかよく考えてから、やり直してね" },

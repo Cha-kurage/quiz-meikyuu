@@ -1,4 +1,4 @@
-// パーツのドラッグ移動 + ダブルクリックで90度回転。
+// パーツのドラッグ移動 + ダブルクリック (ダブルタップ) で90度回転。
 // - 解答ゾーンの中で放すと、その位置に置かれる (ゾーンからはみ出さないよう補正するだけで、吸い付き・スナップはしない)
 // - 背景に大きく置いたパーツ (木) は、ドラッグするとだんだん小さくなり、ゾーンの外で放すと元の大きさで背景へ戻る
 // - 解答ゾーンの外で放すと、石板上の元の位置に戻る (解答済みで凍結中のゾーンも、外と同じ扱いで置けない)
@@ -128,7 +128,8 @@
     notifyChanged();
   }
 
-  const TAP_MOVE_PX = 6; // これ以上動かしたらドラッグ、動かさずに放したら「押した」扱い (音量の画面のベル)
+  const TAP_MOVE_PX = 6; // これ以上動かしたらドラッグ、動かさずに放したら「押した」扱い (音量の画面のベルなど。ステージ座標)
+  const TAP_SCREEN_PX = 12; // パーツのタップ (ダブルタップで回転) の判定。画面上でこれ以上動いたらドラッグ (指のぶれを許す)
 
   function beginDrag(el, e) {
     e.preventDefault();
@@ -136,7 +137,8 @@
 
     const p = toStage(e);
     const c = center(el);
-    drag = { el, pointerId: e.pointerId, dx: c.x - p.x, dy: c.y - p.y, shrink: shrinkInfo(el, p, c) };
+    drag = { el, pointerId: e.pointerId, dx: c.x - p.x, dy: c.y - p.y, shrink: shrinkInfo(el, p, c),
+      from: { x: e.clientX, y: e.clientY }, moved: false }; // from はタップの判定用に画面上の座標 (CSS px)
     el.classList.remove("returning");
     el.classList.add("dragging");
     el.style.zIndex = ++topZ;
@@ -314,6 +316,7 @@
   layer.addEventListener("pointermove", (e) => {
     if (!drag || e.pointerId !== drag.pointerId) return;
     const p = toStage(e);
+    if (!drag.moved && Math.hypot(e.clientX - drag.from.x, e.clientY - drag.from.y) >= TAP_SCREEN_PX) drag.moved = true;
     const s = drag.shrink;
     if (s) {
       const moved = Math.hypot(p.x - s.from.x, p.y - s.from.y);
@@ -329,21 +332,37 @@
   function endDrag(e) {
     if (!drag || e.pointerId !== drag.pointerId) return;
     const el = drag.el;
+    const tapped = !drag.moved;
+    const from = drag.from;
     drag = null;
     el.classList.remove("dragging");
     drop(el);
+    if (tapped) handleTap(el, from);
   }
   layer.addEventListener("pointerup", endDrag);
   layer.addEventListener("pointercancel", endDrag);
 
-  // ダブルクリック(ダブルタップ)で90度回転
-  layer.addEventListener("dblclick", (e) => {
-    const el = e.target.closest(".part");
-    if (!el) return;
+  // ダブルクリック (ダブルタップ) で90度回転。
+  // ブラウザの dblclick イベントは使わず、動かさずに押して放した (タップ) のが同じパーツに続けて2回あったら回す。
+  // (石板の上でも解答ゾーンの中でも、マウスでもタッチでも同じように回るように: 2026-11-24。
+  //  チュートリアルの「山」が解答ゾーンの中でしか回らない、という報告を受けて)
+  // 距離は画面上の CSS px で見る (スマホはステージを小さく縮めているので、ステージ座標だと指のぶれでタップにならない)
+  const DOUBLE_TAP_MS = 450;
+  const DOUBLE_TAP_PX = 30;
+  let lastTap = null; // { el, t, x, y }
+  function handleTap(el, p) {
+    const now = performance.now();
+    const isDouble = lastTap && lastTap.el === el && now - lastTap.t <= DOUBLE_TAP_MS &&
+      Math.hypot(p.x - lastTap.x, p.y - lastTap.y) <= DOUBLE_TAP_PX;
+    if (!isDouble) { lastTap = { el, t: now, x: p.x, y: p.y }; return; }
+    lastTap = null;
+    rotate(el);
+  }
+  function rotate(el) {
     if (inTutorial() && !tutorialCanMove(el)) return;
     const rot = (Number(el.dataset.rot) + 90) % 360;
     el.dataset.rot = rot;
     el.style.setProperty("--rot", `${rot}deg`);
     notifyChanged();
-  });
+  }
 })();
