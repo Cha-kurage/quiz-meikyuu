@@ -116,15 +116,16 @@ const ANSWER_CHECKS = {
     ],
   },
   11: { // Q12 ルパン: x が ル < ハ < ン の順。ハ の右上に ◯ (゜) を置いて パ にする (ユーザー指定 2026-11-17)。
-    // ◯ は石板の赤い記号の列にあるパーツ (symbol_circle)。
+    // ◯ は石板の記号の列にある黒い◯ (symbol_circle)。正解の⭕から取り出した丸 (answer_circle) でも良い
+    // (同じ丸なので、どちらでも使えるようにした: ユーザー指定 2026-11-24。大きさの調整はしない)。
     // 「右上」は、◯ の中心が ハ の中心より右かつ上で、ン の中心より左にあることで見る
-    required: ["kata_ru", "kata_ha", "symbol_circle", "kata_n"],
+    required: ["kata_ru", "kata_ha", "symbol_circle|answer_circle", "kata_n"],
     rules: [
       { type: "ltX", a: "kata_ru", b: "kata_ha" },
       { type: "ltX", a: "kata_ha", b: "kata_n" },
-      { type: "ltX", a: "kata_ha", b: "symbol_circle" },
-      { type: "ltY", a: "symbol_circle", b: "kata_ha" },
-      { type: "ltX", a: "symbol_circle", b: "kata_n" },
+      { type: "ltX", a: "kata_ha", b: "symbol_circle|answer_circle" },
+      { type: "ltY", a: "symbol_circle|answer_circle", b: "kata_ha" },
+      { type: "ltX", a: "symbol_circle|answer_circle", b: "kata_n" },
     ],
   },
   12: { // Q13 ひまわり: 松明 (ひ = 火) と 回る矢印 (まわり) の2つが置いてあれば正解。向き・位置は問わない (ユーザー指定 2026-11-20)
@@ -142,11 +143,12 @@ const ANSWER_CHECKS = {
   },
   14: { // Q15 Quiz (あなたはいまなにをしているか？): Q = 正解の⭕ (取り出したもの) + 「、」を右下に、
     // u = n を180度、i = ！を180度、z = N を90度 (どちら向きでも)。x が Q < u < i < z の順 (ユーザー指定 2026-11-17)。
-    // ⭕は、解答済みの問題に戻って⭕をドラッグし、石板に置くと取れる (drag.js)
-    required: ["answer_circle", "punct_comma", "latin_n_lower", "punct_exclam", "latin_N"],
+    // ⭕は、解答済みの問題に戻って⭕をドラッグし、石板に置くと取れる (drag.js)。
+    // Q の丸は、石板の黒い◯ (symbol_circle) でも良い (ユーザー指定 2026-11-24。12問目と同じく、どちらの丸でも使える)
+    required: ["answer_circle|symbol_circle", "punct_comma", "latin_n_lower", "punct_exclam", "latin_N"],
     rules: [
-      { type: "ltX", a: "answer_circle", b: "punct_comma" },
-      { type: "ltY", a: "answer_circle", b: "punct_comma" },
+      { type: "ltX", a: "answer_circle|symbol_circle", b: "punct_comma" },
+      { type: "ltY", a: "answer_circle|symbol_circle", b: "punct_comma" },
       { type: "ltX", a: "punct_comma", b: "latin_n_lower" },
       { type: "ltX", a: "latin_n_lower", b: "punct_exclam" },
       { type: "ltX", a: "punct_exclam", b: "latin_N" },

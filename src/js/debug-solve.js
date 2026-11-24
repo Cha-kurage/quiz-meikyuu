@@ -36,7 +36,7 @@
     11: [
       { file: "kata_ru", x: 120, y: 100 },
       { file: "kata_ha", x: 250, y: 100 },
-      { file: "symbol_circle", x: 306, y: 44 },
+      { file: "symbol_circle|answer_circle", x: 306, y: 44 },
       { file: "kata_n", x: 400, y: 100 },
     ],
     12: [
@@ -45,7 +45,7 @@
     ],
     13: [{ file: "illust_monalisa", x: 440, y: Y }],
     14: [
-      { file: "answer_circle", x: 120, y: 80 },
+      { file: "answer_circle|symbol_circle", x: 120, y: 80 },
       { file: "punct_comma", x: 165, y: 128 },
       { file: "latin_n_lower", x: 250, y: 100, rot: 180 },
       { file: "punct_exclam", x: 330, y: 100, rot: 180 },

@@ -416,7 +416,7 @@ body {
 #answer-tengu img {
   position: absolute;
   left: 425px;
-  top: 597px;
+  top: 537px; /* 天狗の口 (絵の上から約43%) が吹き出しのしっぽと同じ高さになるように (2026-11-24 ユーザー指示) */
   height: 175px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5));
 }
@@ -665,7 +665,7 @@ body {
 #tut-buttons button:disabled { opacity: .45; cursor: default; }
 #tut-buttons #tut-next:disabled { opacity: .7; background: #e8dcbc; }
 /* 例題の答え: 偽天狗が早押しボタンの横へ移動し、答えが出る位置あたりで「答えは 富士山 だよ」と言う (tutorial.js) */
-#tutorial.reveal #tut-tengu { left: 425px; bottom: 128px; height: 175px; }
+#tutorial.reveal #tut-tengu { left: 425px; bottom: 216px; height: 175px; } /* 天狗の口が吹き出しのしっぽと同じ高さ (2026-11-24) */
 #tutorial.reveal #tut-bubble {
   left: 110px;
   right: auto;

@@ -1,7 +1,9 @@
 // 出題フロー: (早押しボタンを押すまで待つ) → 少し待って出題音 → 少し待って、タイマー開始と同時に問題文を1文字ずつ
 //   → 5秒カウントダウン → 答え。答えは出題ゾーンに文字では出さず、偽天狗が早押しボタンの横に来て言う
-//   (本編は #answer-tengu。正解すると消える。例題は tutorial.js が天狗を動かして言う)。
-// 正解済みの問題でボタンを押すと、問題文だけを最初から読み直す (カウントダウン・天狗の答えは無し: 2026-11-20)。
+//   (本編は #answer-tengu。例題は tutorial.js が天狗を動かして言う)。
+// 1〜15問目に正解すると、読んでいる途中でも止めて、問題文を全部出す。天狗 (と答え) は出さない。
+// 天狗がもう答えを言っていたときも、正解したら天狗は消える (2026-11-24 ユーザー指示)。
+// 正解済みの問題でボタンを押すと、問題文だけを最初から読み直す (カウントダウンは無し: 2026-11-20)。
 // 15問目に正解すると16問目 (最終問題) へ。16問目は白紙で、早押しボタンは押しても反応しない。
 // 出題ゾーンの上には、いまの問題番号を小さく常に出しておく。
 // 読み上げの進み具合は問題ごとに覚えておき、戻る/進むで戻ってきたら、そこまでを表示する。
@@ -129,9 +131,15 @@ document.addEventListener("question:solved", (e) => {
   const i = e.detail.index;
   timerStop(i);
   solveTimes[i] = timerValue(i);
-  // 読み始める前・読み終えた後に正解したときは、吹き出しを消して「押すと問題文を読み直す」にする
-  // (読んでいる途中なら、問題文を最後まで読んでから: readFrom)
-  if (i === currentQuestionIndex && !(currentRun && currentRun.busy)) armReread(i, currentRun, currentRunId);
+  // 1〜15問目: 問題文を全部出したことにする (読んでいる途中でも止める)。天狗 (と答え) は消す。
+  // 表示中の問題なら開き直して出し直す (ボタンを押すと問題文を読み直す、も startQuestion が用意する)
+  if (i >= 0 && i <= LAST_QUESTION_INDEX) {
+    const pr = progressOf(i);
+    Object.assign(pr, { started: true, chars: [...QUESTIONS[i].text].length, textDone: true, countdown: null });
+    if (i === currentQuestionIndex) startQuestion(i);
+  } else if (i === currentQuestionIndex && !(currentRun && currentRun.busy)) {
+    armReread(i, currentRun, currentRunId);
+  }
   renderTimer();
 });
 
@@ -173,7 +181,6 @@ function hideAnswerTengu() {
   stage.classList.remove("answer-told");
   answerTengu.classList.remove("pop");
 }
-document.addEventListener("question:solved", (e) => { if (e.detail.index === currentQuestionIndex) hideAnswerTengu(); });
 
 // 出題音。例題は1重、1問目は「デデン！デデン！」と2回続けて、ほかは2重 (重ねて鳴らす)。
 // 戻り値: 1回目を鳴らしてから問題文までに足す待ち時間 (2回続けて鳴らす分)
@@ -220,7 +227,7 @@ function showCountdown(n) {
 // 答え: 出題ゾーンには文字で出さず、偽天狗が言う (例題は tutorial.js、本編は #answer-tengu。正解済みなら出さない)
 function showAnswer(q, index, { pop = false } = {}) {
   statusEl.innerHTML = "";
-  if (q === EXAMPLE_QUESTION || isQuestionSolved(index)) return;
+  if (q === EXAMPLE_QUESTION || isQuestionSolved(index)) return; // 正解済みの問題では出さない
   showAnswerTengu(q.answer, { pop });
 }
 

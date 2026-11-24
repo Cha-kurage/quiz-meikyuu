@@ -128,11 +128,13 @@
   });
 
   document.getElementById("volume-close").addEventListener("click", () => { playSound("click"); closeVolume(); });
-  volumePanel.addEventListener("click", (e) => { if (e.target === volumePanel) closeVolume(); });
+  // 外側を押す / Esc でも閉じる。ただしチュートリアル中は「閉じる」ボタンでだけ閉じる
+  // (「閉じる」を押してから次のセリフへ進むようにする: 2026-11-24 ユーザー指示)
+  volumePanel.addEventListener("click", (e) => { if (e.target === volumePanel && !inTutorial()) closeVolume(); });
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!volumePanel.hidden) closeVolume();
+    if (!volumePanel.hidden) { if (!inTutorial()) closeVolume(); }
     else if (!menuPanel.hidden) closeMenu();
   });
 })();
