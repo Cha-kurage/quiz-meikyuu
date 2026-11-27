@@ -15,6 +15,7 @@
   const postBtn = document.getElementById("gate-post");
   const saveLink = document.getElementById("gate-save");
   const rankImg = document.getElementById("gate-rank-img");
+  const rotateHint = document.getElementById("rotate-hint"); // 「スマホは横向きに」(スマホだけ。CSS)
 
   // 2026-11-27 ユーザー指示: 開くのをゆっくりに、開いてから偽天狗がしゃべり始めるまで間をあける
   const SHAKE_MS = 900;      // 開く前に揺れる時間 (CSS の gate-shake と同じ)
@@ -52,10 +53,12 @@
     gate.classList.remove("final");
     setState("closed");
     openBtn.hidden = false;
+    rotateHint.hidden = false;
     openBtn.focus({ preventScroll: true });
   }
   openBtn.addEventListener("click", () => {
     openBtn.hidden = true;
+    rotateHint.hidden = true;
     // 開ききる → 少し待って門が消える → 少し間をあけて偽天狗がしゃべり始める
     swingOpen({
       done: () => later(() => {

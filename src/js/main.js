@@ -139,6 +139,7 @@ function renderNumberPart() {
 // ふだんは⭕の中 (非表示)。解答済みの問題の⭕をドラッグして石板の上で放すと、パーツになる (drag.js)。
 // 取り出した後は、正解しても⭕は出なくなり、正解の音だけが鳴る (answers.js)。
 const MARK_PART_SIZE = 80;
+const MARK_PART_ZONE_SIZE = 100; // 解答ゾーンに持っていくと少し大きくなる (2026-11-27 ユーザー指示)
 
 function renderMarkCirclePart() {
   const el = document.createElement("div");
@@ -150,6 +151,7 @@ function renderMarkCirclePart() {
   el.style.height = `${MARK_PART_SIZE}px`;
   el.style.left = "0px";
   el.style.top = "0px";
+  setZoneSize(el, MARK_PART_SIZE, MARK_PART_ZONE_SIZE);
   document.getElementById("parts-layer").appendChild(el);
 }
 

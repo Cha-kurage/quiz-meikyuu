@@ -28,7 +28,8 @@
 
   // 鼻を取り出せるときは、鼻の上のカーソルを「掴める」にする
   function refreshNoseTakeable() {
-    track.classList.toggle("nose-takeable", !inTutorial() && currentQuestionIndex === FINAL_INDEX &&
+    const replay = !!window.isTutorialReplay && isTutorialReplay(); // もう一度見ているチュートリアルの間も (tutorial.js)
+    track.classList.toggle("nose-takeable", (replay || (!inTutorial() && currentQuestionIndex === FINAL_INDEX)) &&
       !isQuestionSolved(FINAL_INDEX) && volume >= NOSE_TAKE_VOLUME);
   }
 

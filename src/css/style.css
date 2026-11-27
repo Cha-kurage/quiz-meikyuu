@@ -9,12 +9,8 @@ html, body {
 }
 
 body {
-  /* 仮の背景 (ダンジョンの石壁は素材が揃い次第差し替え) */
-  background-color: #2b2622;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, .35) 0 3px, transparent 3px 64px),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, .25) 0 3px, transparent 3px 128px),
-    radial-gradient(ellipse at center, #3a332d 0%, #1c1815 100%);
+  /* 画面 (1600x900) の外側は黒く塗る (2026-11-27 ユーザー指示: スマホ横向きで左右にすき間ができ、木などが見えてしまうため) */
+  background-color: #000;
   /* 全体 MS ゴシック。Mac には入っていないので等幅の日本語フォントで代替 */
   font-family: "MS Gothic", "ＭＳ ゴシック", "Osaka-Mono", "Osaka－等幅", "Hiragino Kaku Gothic ProN", "Yu Gothic", monospace;
   -webkit-user-select: none;
@@ -31,6 +27,13 @@ body {
   height: 900px;
   transform-origin: 0 0;
   touch-action: none;
+  overflow: hidden; /* 画面からはみ出した木などは、外側に見せない */
+  /* 仮の背景 (ダンジョンの石壁は素材が揃い次第差し替え)。もとは body の背景だった */
+  background-color: #2b2622;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .35) 0 3px, transparent 3px 64px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .25) 0 3px, transparent 3px 128px),
+    radial-gradient(ellipse at center, #3a332d 0%, #1c1815 100%);
 }
 
 /* ---------- 石板 (9スライスで任意サイズに伸縮) ---------- */
@@ -593,7 +596,7 @@ body {
 /* ---------- チュートリアル (tutorial.js) ---------- */
 /* 例題のパーツはチュートリアル中だけ。チュートリアル中は、ほかのパーツ (装飾の木・松明・風・ベルを除く)・戻る/進む・タイマーを隠す */
 #stage:not(.tutorial) .part.tut-part { display: none; }
-#stage.tutorial .part:not(.tut-part):not(.decor),
+#stage.tutorial .part:not(.tut-part):not(.decor):not(.final-part), /* 取り出した偽天狗・鼻は出す (まだのものは in-ask / in-nose で隠れている) */
 #stage.tutorial .nav-btn,
 #stage.tutorial #question-timer { display: none; }
 /* 例題を流すセリフまでは「ボタンを押して出題」の吹き出しを出さない */
@@ -706,7 +709,9 @@ body {
 #tut-buttons [hidden] { display: none; }
 #tut-buttons { gap: 10px; }
 /* 「もう一度見るか？」と聞いてくる偽天狗は、ドラッグするとパーツとして取り出せる (drag.js。どの問題でも) */
-#tutorial.ask-final #tut-tengu { pointer-events: auto; cursor: grab; touch-action: none; }
+#tutorial.tengu-takeable #tut-tengu { pointer-events: auto; cursor: grab; touch-action: none; }
+/* 偽天狗をパーツとして取り出した後は、天狗の絵は出さず吹き出しだけでしゃべる (2026-11-27) */
+#tutorial.no-tengu #tut-tengu { visibility: hidden; }
 
 /* 例題の説明中、いま使っていないパーツは動かせない / 回答できないセリフでは「これで回答」を押せない */
 #stage.tutorial .part.tut-part.tut-still { cursor: default; }
@@ -982,4 +987,46 @@ body {
 @media (prefers-reduced-motion: reduce) {
   #gate.shaking .gate-doors { animation: none; }
   #gate .gate-door { transition-duration: .4s; }
+}
+
+/* ---------- 「スマホは横向きに」(2026-11-27 ユーザー指示): 最初の門を開ける画面で、スマホ (指で操作する端末) にだけ出す ----------
+   画面 (#stage) の外に置いて画面の真ん中に重ねるので、縦向きで画面が小さくなっていても読める大きさになる (gate.js が出し入れする) */
+#rotate-hint {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 40000;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  transform: translate(-50%, -50%);
+  padding: 12px 22px;
+  border: 2px solid #000; /* 角丸なし・黒い枠 (2026-11-27 ユーザー指示) */
+  border-radius: 0;
+  background: rgba(20, 12, 6, .82);
+  color: #f3e2b0;
+  font-size: clamp(14px, 4.2vmin, 26px);
+  font-weight: bold;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none; /* 下の「門を開ける」はそのまま押せる */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .6);
+}
+@media (pointer: coarse) {
+  #rotate-hint:not([hidden]) { display: flex; }
+}
+/* 横に倒れるスマホの絵 */
+#rotate-hint .rotate-phone {
+  flex: none;
+  width: 1.1em;
+  height: 1.8em;
+  box-sizing: border-box;
+  border: .18em solid #f3e2b0;
+  border-radius: .25em;
+  animation: rotate-phone 2.4s ease-in-out infinite;
+}
+@keyframes rotate-phone {
+  0%, 25% { transform: rotate(0deg); }
+  55%, 85% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
 }

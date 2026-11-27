@@ -43,6 +43,23 @@
   }
   window.getAnswerZoneRect = zoneRect;
 
+  // 問題によって、解答ゾーンでの大きさを変えるパーツ (2026-11-27 ユーザー指示)。
+  // 12問目 (ルパン) の「゜」に使う丸は、解答ゾーンでも大きくしない (15問目の Q では大きくする)
+  const ZONE_SIZE_BY_QUESTION = {
+    symbol_circle: { 11: 50 },  // 黒い◯: 石板と同じ 50
+    answer_circle: { 11: 80 },  // ⭕から取り出した赤い丸: 取り出したときと同じ 80
+  };
+  window.applyZoneSizesFor = (index) => { // quiz.js の startQuestion から
+    Object.entries(ZONE_SIZE_BY_QUESTION).forEach(([file, byQ]) => {
+      document.querySelectorAll(`.part[data-file="${file}"]`).forEach((el) => {
+        if (!el.dataset.zoneSizeDefault) el.dataset.zoneSizeDefault = el.dataset.smallSize;
+        el.dataset.smallSize = byQ[index] ?? el.dataset.zoneSizeDefault;
+        // いま解答ゾーンに置いてあるものは、その場で大きさを合わせる
+        if (!el.classList.contains("dragging") && isInAnswerZone(el)) setSize(el, Number(el.dataset.smallSize));
+      });
+    });
+  };
+
   // 大きさは高さで扱う。正方形でないパーツ (偽天狗・鼻) は data-aspect (幅/高さ) で幅を決める
   function setSize(el, size) {
     el.style.width = `${size * (Number(el.dataset.aspect) || 1)}px`;
@@ -144,9 +161,41 @@
     el.style.zIndex = ++topZ;
   }
 
+  // 背景の大きな木は、画像の四角のうち絵の無い (透明な) 所を押しても掴まない (2026-11-27)。
+  // 9問目では、そこは壁として取れる (木の四角に隠れて壁が取れない所があった)
+  const alphaCache = new Map(); // 画像の src → { w, h, data }
+  function opaqueAt(img, e) {
+    if (!(img instanceof HTMLImageElement) || !img.complete || !img.naturalWidth) return true;
+    if ((Number(img.dataset.rot) || 0) % 360 !== 0) return true; // 回してあるときは四角全体で掴む
+    let a = alphaCache.get(img.src);
+    if (!a) {
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const g = c.getContext("2d");
+        g.drawImage(img, 0, 0);
+        a = { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };
+      } catch (_) {
+        a = { w: 0 }; // 読めないときは四角全体で掴む
+      }
+      alphaCache.set(img.src, a);
+    }
+    if (!a.w) return true;
+    const r = img.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / r.width * a.w);
+    const y = Math.floor((e.clientY - r.top) / r.height * a.h);
+    if (x < 0 || y < 0 || x >= a.w || y >= a.h) return false;
+    return a.data[(y * a.w + x) * 4 + 3] > 24;
+  }
+
   layer.addEventListener("pointerdown", (e) => {
     const el = e.target.closest(".part");
     if (!el || drag) return;
+    if (el.classList.contains("bg") && !opaqueAt(el, e)) { // 木の透明な所 = 背景を押したのと同じ
+      takeWall(e);
+      return;
+    }
     // チュートリアル中は、いまのセリフで使う例題のパーツだけ動かせる (tutorial.js)
     if (inTutorial() && !tutorialCanMove(el)) { e.preventDefault(); return; }
     beginDrag(el, e);
@@ -163,8 +212,11 @@
   }
 
   stage.addEventListener("pointerdown", (e) => {
-    if (e.target !== stage || drag) return; // ゾーンやボタン、パーツの上ではなく、背景そのものを押したときだけ
-    if (currentQuestionIndex !== WALL_QUESTION_INDEX) return;
+    if (e.target !== stage) return; // ゾーンやボタン、パーツの上ではなく、背景そのものを押したときだけ
+    takeWall(e);
+  });
+  function takeWall(e) {
+    if (drag || currentQuestionIndex !== WALL_QUESTION_INDEX || inTutorial()) return;
     const wall = document.querySelector(".part.wall");
     if (!wall || !wall.classList.contains("in-wall")) return; // 壁は1つだけ。もう取り出してあるときは何もしない
 
@@ -177,7 +229,7 @@
     wallHole.hidden = false;
     wall.classList.remove("in-wall");
     beginDrag(wall, e);
-  });
+  }
 
   // ---- 解答済みの問題の⭕: ドラッグすると丸のパーツとして取り出せる ----
   const markEl = document.getElementById("answer-mark");
@@ -268,7 +320,7 @@
       case "mark": el.classList.add("in-mark"); restoreMarkCircle(); break;
       case "bell": el.classList.add("in-volume"); refreshVolumeBell(); break;
       case "nose": el.classList.add("in-nose"); refreshVolumeNose(); break;
-      case "ask": el.classList.add("in-ask"); refreshAnswerTengu(); break; // 答えを言う天狗の絵がまた出る (quiz.js)
+      case "ask": el.classList.add("in-ask"); refreshAnswerTengu(); refreshTutTengu(); break; // 天狗の絵がまた出る (quiz.js / tutorial.js)
     }
   }
 
@@ -284,11 +336,14 @@
   });
 
   // 16問目: 音量の画面の天狗の鼻 (つまみ以外の所) をドラッグすると、鼻を取り出せる (鼻が真っ赤のときだけ)。
-  // ほかの問題や、つまみを押したときは、ふだんどおり音量を変える (menu.js)
+  // メニューから「もう一度」見ているチュートリアルの間も取れる (どの問題から見ても。2026-11-27 ユーザー指示)。
+  // 取り出した鼻は、偽天狗と同じく、どの問題でも見える (roam)。
+  // ほかのときや、つまみを押したときは、ふだんどおり音量を変える (menu.js)
   const volumeTrack = document.getElementById("volume-track");
   const nosePart = () => document.querySelector(".part.tengu-nose");
   // 鼻が真っ赤 (音量 100) のときだけ (2026-11-20 ユーザー指示)。それ以外は鼻を押すと、ふだんどおり音量が変わる
-  const noseTakeable = () => !inTutorial() && currentQuestionIndex === FINAL_INDEX && !isQuestionSolved(FINAL_INDEX) &&
+  const noseTakeable = () => (isTutorialReplay() || (!inTutorial() && currentQuestionIndex === FINAL_INDEX)) &&
+    !isQuestionSolved(FINAL_INDEX) &&
     getVolume() >= 100 &&
     !!nosePart() && nosePart().classList.contains("in-nose");
   pressToTake(volumeTrack, {
@@ -296,21 +351,22 @@
     takeable: noseTakeable,
     part: nosePart,
     hideClass: "in-nose",
-    onTake: () => { refreshVolumeNose(); closeVolume(); },
+    onTake: () => { nosePart().classList.add("roam"); refreshVolumeNose(); closeVolume(); },
   });
 
   // 「説明をもう一度見る」で出てきた偽天狗をドラッグすると、偽天狗を取り出せる (どの問題でも)
   const askTengu = document.getElementById("tut-tengu");
   const tenguPart = () => document.querySelector(".part.nise-tengu");
-  // 16問目に限らず、どの問題でも取り出せる (2026-11-24 ユーザー指示)。取り出した偽天狗は、ほかのパーツと同じに扱う
-  const tenguTakeable = () => isTutorialAsking() && !inTutorial() && !isQuestionSolved(FINAL_INDEX) &&
+  // 16問目に限らず、どの問題でも取り出せる (2026-11-24 ユーザー指示)。取り出した偽天狗は、ほかのパーツと同じに扱う。
+  // メニューから「もう一度」見ているチュートリアルの間も、しゃべっている天狗を取り出せる (2026-11-27。その後は吹き出しだけで続く)
+  const tenguTakeable = () => ((isTutorialAsking() && !inTutorial()) || isTutorialReplay()) && !isQuestionSolved(FINAL_INDEX) &&
     !!tenguPart() && tenguPart().classList.contains("in-ask");
   pressToTake(askTengu, {
     pressable: tenguTakeable,
     takeable: tenguTakeable,
     part: tenguPart,
     hideClass: "in-ask",
-    onTake: () => { closeTutorialAsk(); refreshAnswerTengu(); }, // 聞くのをやめて、天狗はパーツになる (tutorial.js)
+    onTake: () => { onTutTenguTaken(); refreshAnswerTengu(); }, // 聞くのをやめて、天狗はパーツになる (tutorial.js)
   });
 
   // 本編で答えを言っている偽天狗も、ドラッグすると偽天狗を取り出せる (2026-11-27 ユーザー指示)。

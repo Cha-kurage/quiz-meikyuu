@@ -357,6 +357,7 @@ async function readFromInner(q, index, pr, run, stale) {
 function startQuestion(index) {
   timerStop(currentQuestionIndex); // 前の問題のタイマーは、離れている間は止める
   currentQuestionIndex = index;
+  applyZoneSizesFor(index); // 12問目は◯を大きくしない (drag.js)
   prepareAnswerZone(index); // 解答ゾーンをリセットし、解答済みならその配置を復元する
   const q = questionAt(index);
   const run = createRun();

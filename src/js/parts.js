@@ -36,10 +36,13 @@ const PARTS_LAYOUT = [
   ], { startX: 58, pitch: 88, size: 88 }),
 
   // 3行目右端: 小さめの記号 (赤の n, N, 、, ！ と、黒の ◯)。◯ は12問目ルパンの「゜」用 (仮素材。2026-11-17 に作成)
-  // 「、」は解答ゾーンに持っていくと大きくなる (2026-11-20 ユーザー指示)
-  ...tweak(row(240, [
+  // 解答ゾーンに持っていくと大きくなる (「、」: 2026-11-20 / ほか: 2026-11-27 ユーザー指示。15問目「Quiz」の文字が小さすぎたので)
+  ...[
+    // i (！) と z (N) は大きすぎたので 85 に (2026-11-27 ユーザー指示)。12問目では◯は大きくしない (drag.js の ZONE_SIZE_BY_QUESTION)
+    ["latin_n_lower", 110], ["latin_N", 85], ["punct_comma", 110], ["punct_exclam", 85], ["symbol_circle", 120],
+  ].reduce((list, [file, zoneSize]) => tweak(list, file, { zoneSize }), row(240, [
     "latin_n_lower", "latin_N", "punct_comma", "punct_exclam", "symbol_circle",
-  ], { startX: 648, pitch: 38, size: 50 }), "punct_comma", { zoneSize: 78 }),
+  ], { startX: 648, pitch: 38, size: 50 })),
 
   // 4行目: イラスト
   ...row(372, [

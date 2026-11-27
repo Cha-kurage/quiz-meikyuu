@@ -85,6 +85,7 @@
   let active = false;
   let stepIndex = 0;
   let returnIndex = 0;    // チュートリアルが終わったら開く問題
+  let replay = false;     // メニューの「説明をもう一度見る」→「はい」で見ているチュートリアル (最初のものではない)
   let typingTimer = null;
   let typedAll = true;
   let checkTimer = null;
@@ -166,7 +167,8 @@
     updateNextButton();
   }
 
-  const canMove = (el) => active && el.classList.contains("tut-part") && (STEPS[stepIndex].movable || []).includes(el.dataset.file);
+  const canMove = (el) => active && ((el.classList.contains("tut-part") && (STEPS[stepIndex].movable || []).includes(el.dataset.file)) ||
+    (replay && el.classList.contains("final-part"))); // もう一度見ているときは、取り出した天狗・鼻も動かせる
 
   // ---- 例題の答え: 偽天狗が早押しボタンの横へ行って「答えは 〜 である」と言い、戻ってきて「見たであろう」へ ----
   let revealTimers = [];
@@ -233,8 +235,10 @@
   }
 
   // hold: 準備だけして、しゃべり始めるのは beginTutorial() まで待つ (ページを開いたときは、門が開いてから: gate.js)
-  function startTutorial({ hold = false } = {}) {
+  // replay: メニューから「もう一度」見るとき。その間だけ、天狗と音量の画面の鼻をパーツとして取れる (2026-11-27 ユーザー指示)
+  function startTutorial({ hold = false, replay: again = false } = {}) {
     closeAsk();
+    replay = again;
     returnIndex = active ? returnIndex : (currentQuestionIndex === TUTORIAL_INDEX ? 0 : currentQuestionIndex);
     active = true;
     clearReveal();
@@ -247,6 +251,7 @@
   function beginTutorial() {
     root.hidden = false;
     skipBtn.hidden = false;
+    refreshTutTengu();
     showStep(0);
     clearInterval(checkTimer);
     checkTimer = setInterval(check, CHECK_MS);
@@ -262,6 +267,8 @@
     clearFocus();
     root.hidden = true;
     skipBtn.hidden = true;
+    replay = false;
+    refreshTutTengu();
     stage.classList.remove("tutorial", "tut-buzzer", "tut-no-submit", "tut-no-buzzer", "tut-no-menu");
     startQuestion(returnIndex);
   }
@@ -273,9 +280,7 @@
     clearFocus();
     root.hidden = false;
     root.classList.add("ask");
-    // 聞いてくる偽天狗は掴める (どの問題でも。チュートリアルの途中と、もう取り出してあるときは除く)
-    const tenguPart = document.querySelector(".part.nise-tengu");
-    root.classList.toggle("ask-final", !active && !!tenguPart && tenguPart.classList.contains("in-ask"));
+    refreshTutTengu(); // 聞いてくる偽天狗は掴める (どの問題でも。最初のチュートリアルの途中と、もう取り出してあるときは除く)
     nextBtn.hidden = true;
     yesBtn.hidden = false;
     noBtn.hidden = false;
@@ -284,7 +289,8 @@
   function closeAsk() {
     if (!asking) return;
     asking = false;
-    root.classList.remove("ask", "ask-final");
+    root.classList.remove("ask");
+    refreshTutTengu();
     nextBtn.hidden = false;
     yesBtn.hidden = true;
     noBtn.hidden = true;
@@ -295,7 +301,25 @@
       root.hidden = true;
     }
   }
-  yesBtn.addEventListener("click", () => { playSound("click"); closeAsk(); startTutorial(); });
+  yesBtn.addEventListener("click", () => { playSound("click"); closeAsk(); startTutorial({ replay: true }); });
+
+  // 偽天狗の絵: パーツとして取り出した後は出さない (吹き出しだけでしゃべる)。
+  // 掴めるのは「もう一度見るか？」と聞いているとき (最初のチュートリアルの途中を除く) と、もう一度見ているチュートリアルの間
+  function refreshTutTengu() {
+    const p = document.querySelector(".part.nise-tengu");
+    const out = !!p && !p.classList.contains("in-ask");
+    root.classList.toggle("no-tengu", out);
+    root.classList.toggle("tengu-takeable", !!p && !out && !isQuestionSolved(FINAL_INDEX) &&
+      ((asking && !active) || (active && replay)));
+  }
+  // 偽天狗を取り出したとき (drag.js): 聞いている途中ならやめる。もう一度見ているチュートリアルは、吹き出しだけで続ける
+  function onTenguTaken() {
+    if (asking) {
+      closeAsk();
+      if (active) showStep(stepIndex);
+    }
+    refreshTutTengu();
+  }
   noBtn.addEventListener("click", () => {
     playSound("click");
     closeAsk();
@@ -307,6 +331,9 @@
   window.isTutorialAsking = () => asking;
   window.startTutorial = startTutorial;
   window.isTutorialActive = () => active;
+  window.isTutorialReplay = () => active && replay; // drag.js / menu.js
+  window.refreshTutTengu = refreshTutTengu; // drag.js
+  window.onTutTenguTaken = onTenguTaken; // drag.js
   window.tutorialCanMove = canMove; // drag.js
   window.tutorialAllowsSubmit = () => !active || !!STEPS[stepIndex].submit; // answers.js
   window.tutorialAllowsBuzzer = () => !active || (!!STEPS[stepIndex].buzzer && !revealing); // quiz.js
