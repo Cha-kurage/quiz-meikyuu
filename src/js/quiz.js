@@ -126,10 +126,6 @@ function renderTimer() {
 }
 setInterval(renderTimer, 100);
 
-// 1〜15問目を、どの段階で正解したか (早押しクイズ力の評価に使う: gate.js の quizRank)
-//   early: 問題文を読み終わる前 (早押しボタンで止めて答えた) / read: 読み終わってから、天狗が答えを言う前 / told: 天狗が答えを言った後
-const solveStage = {};
-
 // 正解したら (answers.js から通知)、タイマーを止めてその値を記録する
 document.addEventListener("question:solved", (e) => {
   const i = e.detail.index;
@@ -139,10 +135,6 @@ document.addEventListener("question:solved", (e) => {
   // 表示中の問題なら開き直して出し直す (ボタンを押すと問題文を読み直す、も startQuestion が用意する)
   if (i >= 0 && i <= LAST_QUESTION_INDEX) {
     const pr = progressOf(i);
-    // 早押しクイズ力 (gate.js) のために、どの段階で正解したかを覚えておく
-    if (!(i in solveStage)) {
-      solveStage[i] = pr.answered ? "told" : pr.chars < [...QUESTIONS[i].text].length ? "early" : "read";
-    }
     Object.assign(pr, { started: true, chars: [...QUESTIONS[i].text].length, textDone: true, countdown: null });
     if (i === currentQuestionIndex) startQuestion(i);
   } else if (i === currentQuestionIndex && !(currentRun && currentRun.busy)) {

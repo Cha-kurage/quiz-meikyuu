@@ -1,31 +1,33 @@
 // クリア後の「あなたの早押しクイズ力」(2026-11-27 ユーザー指示)。評価は D・C・B・A・S・SS。
-// 評価のしかた (Claude が決めたもの。変えるときはここだけ):
-//   1〜15問目それぞれ、どの段階で正解したか (quiz.js の solveStage) で点をつける。
-//     問題文を読み終わる前に正解 (早押し) = 2点 / 読み終わってから、天狗が答えを言う前 = 1点 / 天狗が答えを言った後・未正解 = 0点
-//   合計 (最大30点) で RANKS のいちばん上から当てはまるもの。
+// 評価のしかた (2026-11-27 ユーザー指示: 全問の解答にかかった時間の平均から出す):
+//   1〜15問目それぞれの「記録」(quiz.js の solveTimes = 正解したときのタイマーの値。タイマーは問題文が出始めると動き、
+//   早押しボタンで止まる) を15問ぶん足して15で割る。正解していない問題は 0秒 として数える
+//   (早めに最終問題に気付いて、ほかのクイズに答えずにクリアした人ほど、平均が短くなって評価が高くなるように。2026-11-27 ユーザー指示)。
+//   平均が RANKS の maxSec 秒以下なら、いちばん上から当てはまる評価 (区切りの秒数は Claude が決めたもの。変えるときはここだけ)。
+//   目安: 問題文 (15文字) を出し切るのに約2.7秒、天狗が答えを言うまで約8秒。
 // 画像は canvas で描いて PNG にする (保存・長押しで保存できる)。ネタバレになる答えや問題文は載せない。
 
-const RANK_POINTS = { early: 2, read: 1, told: 0 };
-const RANKS = [ // min 点以上ならその評価
-  { rank: "SS", min: 27, color: ["#fff1b8", "#e8b83c", "#c0392b"], comment: "天狗もびっくりの早押し王！" },
-  { rank: "S", min: 22, color: ["#fff1b8", "#e8b83c", "#b8860b"], comment: "迷宮も驚く早押しの達人！" },
-  { rank: "A", min: 16, color: ["#ffd0c4", "#e05a3c", "#9c2a17"], comment: "かなりの早押し上手！" },
-  { rank: "B", min: 10, color: ["#d8ecff", "#5a9be0", "#2a5c9c"], comment: "なかなかの早押し力！" },
-  { rank: "C", min: 5, color: ["#dff5d8", "#5cb85c", "#2e7a2e"], comment: "じっくり考えるタイプ！" },
-  { rank: "D", min: 0, color: ["#eeeeee", "#a8a8a8", "#666666"], comment: "天狗の答えをよく聞いた！" },
+const UNSOLVED_MS = 0; // 正解していない問題は 0秒 として数える
+const RANKS = [ // 平均が maxSec 秒以下ならその評価
+  { rank: "SS", maxSec: 3, color: ["#fff1b8", "#e8b83c", "#c0392b"], comment: "天狗もびっくりの早押し王！" },
+  { rank: "S", maxSec: 5, color: ["#fff1b8", "#e8b83c", "#b8860b"], comment: "迷宮も驚く早押しの達人！" },
+  { rank: "A", maxSec: 8, color: ["#ffd0c4", "#e05a3c", "#9c2a17"], comment: "かなりの早押し上手！" },
+  { rank: "B", maxSec: 15, color: ["#d8ecff", "#5a9be0", "#2a5c9c"], comment: "なかなかの早押し力！" },
+  { rank: "C", maxSec: 30, color: ["#dff5d8", "#5cb85c", "#2e7a2e"], comment: "じっくり考えるタイプ！" },
+  { rank: "D", maxSec: Infinity, color: ["#eeeeee", "#a8a8a8", "#666666"], comment: "天狗の答えをよく聞いた！" },
 ];
 
 function quizRank() {
-  const stages = { early: 0, read: 0, told: 0 };
-  let points = 0;
-  for (let i = 0; i <= LAST_QUESTION_INDEX; i++) {
-    const st = solveStage[i];
-    if (!st) continue;
-    stages[st]++;
-    points += RANK_POINTS[st];
+  let total = 0;
+  let unsolved = 0;
+  const count = LAST_QUESTION_INDEX + 1; // 1〜15問目
+  for (let i = 0; i < count; i++) {
+    if (i in solveTimes) total += solveTimes[i];
+    else { total += UNSOLVED_MS; unsolved++; }
   }
-  const r = RANKS.find((x) => points >= x.min) || RANKS[RANKS.length - 1];
-  return { ...r, points, stages };
+  const avgSec = total / count / 1000;
+  const r = RANKS.find((x) => avgSec <= x.maxSec) || RANKS[RANKS.length - 1];
+  return { ...r, avgSec, unsolved };
 }
 
 const RANK_IMG_W = 1200;
@@ -95,7 +97,7 @@ async function drawRankImage(result) {
   const [c0, c1, c2] = result.color;
   const size = result.rank.length > 1 ? 250 : 280;
   g.font = `bold ${size}px ${MINCHO}`;
-  const grad = g.createLinearGradient(0, 230, 0, 470);
+  const grad = g.createLinearGradient(0, 210, 0, 450);
   grad.addColorStop(0, c0);
   grad.addColorStop(0.5, c1);
   grad.addColorStop(1, c2);
@@ -103,21 +105,26 @@ async function drawRankImage(result) {
   g.shadowColor = c1;
   g.shadowBlur = 40;
   g.fillStyle = grad;
-  g.fillText(result.rank, W / 2, 355);
+  g.fillText(result.rank, W / 2, 335);
   g.restore();
   g.lineWidth = 4;
   g.strokeStyle = "rgba(40, 20, 8, .8)";
-  g.strokeText(result.rank, W / 2, 355);
+  g.strokeText(result.rank, W / 2, 335);
+
+  // 平均の解答時間 (正解していない問題はペナルティの時間で数えている)
+  g.fillStyle = "#e9cf86";
+  g.font = `bold 30px ${MINCHO}`;
+  g.fillText(`平均解答時間  ${result.avgSec.toFixed(1)}秒`, W / 2, 470);
 
   // ひとこと
   g.fillStyle = "#f3e2b0";
   g.font = `bold 40px ${MINCHO}`;
-  g.fillText(result.comment, W / 2, 500);
+  g.fillText(result.comment, W / 2, 522);
 
   // 下: ハッシュタグ
   g.fillStyle = "#c9a24a";
-  g.font = `28px ${MINCHO}`;
-  g.fillText("#天狗のクイズ迷宮  #からのもぬけ", W / 2, 562);
+  g.font = `26px ${MINCHO}`;
+  g.fillText("#天狗のクイズ迷宮  #からのもぬけ", W / 2, 574);
 
   return c.toDataURL("image/png");
 }
