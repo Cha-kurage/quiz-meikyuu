@@ -126,6 +126,10 @@ function renderTimer() {
 }
 setInterval(renderTimer, 100);
 
+// 1〜15問目を、どの段階で正解したか (早押しクイズ力の評価に使う: gate.js の quizRank)
+//   early: 問題文を読み終わる前 (早押しボタンで止めて答えた) / read: 読み終わってから、天狗が答えを言う前 / told: 天狗が答えを言った後
+const solveStage = {};
+
 // 正解したら (answers.js から通知)、タイマーを止めてその値を記録する
 document.addEventListener("question:solved", (e) => {
   const i = e.detail.index;
@@ -135,6 +139,10 @@ document.addEventListener("question:solved", (e) => {
   // 表示中の問題なら開き直して出し直す (ボタンを押すと問題文を読み直す、も startQuestion が用意する)
   if (i >= 0 && i <= LAST_QUESTION_INDEX) {
     const pr = progressOf(i);
+    // 早押しクイズ力 (gate.js) のために、どの段階で正解したかを覚えておく
+    if (!(i in solveStage)) {
+      solveStage[i] = pr.answered ? "told" : pr.chars < [...QUESTIONS[i].text].length ? "early" : "read";
+    }
     Object.assign(pr, { started: true, chars: [...QUESTIONS[i].text].length, textDone: true, countdown: null });
     if (i === currentQuestionIndex) startQuestion(i);
   } else if (i === currentQuestionIndex && !(currentRun && currentRun.busy)) {
@@ -166,12 +174,18 @@ function setWaitingForBuzzer(read, label = "ボタンを押して出題") {
   hintEl.hidden = !read || label === null;
 }
 
+// 答えのふりがなを「（こぶし）」の形にする。ふりがなの無い答え (かな・数字・英字) は空
+function readingLabel(q) {
+  return q.reading ? `（${q.reading}）` : "";
+}
+
 // ---- 答えを言う偽天狗 (本編) ----
-// カウントダウンが終わると、早押しボタンの横に偽天狗が出て「答えは / ○○ / だよ」と言う。
+// カウントダウンが終わると、早押しボタンの横に偽天狗が出て「答えは / ○○ / である」と言う。
 // その問題に正解するまで出たまま (ほかの問題へ移って戻ってきても出ている)。正解すると消える
 const answerTengu = document.getElementById("answer-tengu");
-function showAnswerTengu(answer, { pop = false } = {}) {
-  answerTengu.querySelector(".tut-answer").textContent = answer;
+function showAnswerTengu(q, { pop = false } = {}) {
+  answerTengu.querySelector(".tut-answer").textContent = q.answer;
+  answerTengu.querySelector(".tut-reading").textContent = readingLabel(q); // 漢字の答えは「（ふりがな）」も
   answerTengu.hidden = false;
   answerTengu.classList.toggle("pop", pop);
   stage.classList.add("answer-told");
@@ -228,7 +242,7 @@ function showCountdown(n) {
 function showAnswer(q, index, { pop = false } = {}) {
   statusEl.innerHTML = "";
   if (q === EXAMPLE_QUESTION || isQuestionSolved(index)) return; // 正解済みの問題では出さない
-  showAnswerTengu(q.answer, { pop });
+  showAnswerTengu(q, { pop });
 }
 
 // 覚えている進み具合のところまでを、一度に表示する
@@ -328,7 +342,7 @@ async function readFromInner(q, index, pr, run, stale) {
   pr.countdown = null;
   pr.answered = true;
   showAnswer(q, index, { pop: true });
-  if (index === TUTORIAL_INDEX) document.dispatchEvent(new CustomEvent("tutorial:answer", { detail: { answer: q.answer } }));
+  if (index === TUTORIAL_INDEX) document.dispatchEvent(new CustomEvent("tutorial:answer", { detail: { answer: q.answer, reading: readingLabel(q) } }));
 }
 
 function startQuestion(index) {

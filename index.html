@@ -44,7 +44,7 @@
     <!-- 本編の答え: 偽天狗が早押しボタンの横に出て言う (quiz.js)。正解すると消える -->
     <div id="answer-tengu" hidden>
       <img src="assets/images/tengu/nise_tengu.png" alt="" draggable="false">
-      <div class="at-bubble"><div>答えは</div><div class="tut-answer"></div><div>だよ</div></div>
+      <div class="at-bubble"><div>答えは</div><div class="at-answer-line"><span class="tut-answer"></span><span class="tut-reading"></span></div><div>である</div></div>
     </div>
 
     <button id="submit-btn" type="button">これで回答</button>
@@ -106,6 +106,29 @@
     <button id="prev-btn" class="nav-btn" type="button">◀ 戻る</button>
     <button id="next-btn" class="nav-btn" type="button">進む ▶</button>
 
+    <!-- 迷宮の門: 最初 (ページを開いたとき) と最後 (16問目に正解したとき) に開く (gate.js) -->
+    <div id="gate" class="closed" hidden>
+      <div class="gate-light"></div>
+      <div class="gate-message">
+        <div class="gate-message-title">迷宮の門が開いた！</div>
+        <div class="gate-message-sub">全問クリア、おめでとう！</div>
+        <!-- クリア後: 「あなたの早押しクイズ力」の画像と、保存・ポスト・閉じる (gate.js / rank.js) -->
+        <img id="gate-rank-img" alt="あなたの早押しクイズ力" draggable="false">
+        <div class="gate-rank-hint">スマホは画像を長押しして保存できます</div>
+        <div class="gate-actions">
+          <a id="gate-save" class="gate-action" download="quiz-meikyu-hayaoshi.png" href="#">画像を保存</a>
+          <button id="gate-post" class="gate-action gate-action-post" type="button">ネタバレのない感想をポスト</button>
+          <button id="gate-close" class="gate-action" type="button">閉じる</button>
+        </div>
+      </div>
+      <div class="gate-doors">
+        <div class="gate-door gate-door-left"><div class="gate-band top"></div><div class="gate-band bottom"></div><div class="gate-ring"></div></div>
+        <div class="gate-door gate-door-right"><div class="gate-band top"></div><div class="gate-band bottom"></div><div class="gate-ring"></div></div>
+      </div>
+      <div class="gate-lintel"><div class="gate-plate">Quiz迷宮</div></div>
+      <button id="gate-open" class="gate-btn" type="button">門を開ける</button>
+    </div>
+
   </div>
 
   <script src="src/js/parts.js"></script>
@@ -116,6 +139,8 @@
   <script src="src/js/answers.js"></script>
   <script src="src/js/quiz.js"></script>
   <script src="src/js/menu.js"></script>
+  <script src="src/js/rank.js"></script>
+  <script src="src/js/gate.js"></script>
   <script src="src/js/tutorial.js"></script>
   <!-- 開発用 (今は外している。上のボタンと一緒にコメントを外すと使える)
   <script src="src/js/debug-coords.js"></script>

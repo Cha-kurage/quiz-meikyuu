@@ -1,10 +1,10 @@
 // メニュー (左上の三本線) と、音量の調節。
 // - メニュー: 「音量の調節」「説明をもう一度見る」「閉じる」
-// - 音量の調節: 本物の天狗の鼻 (180度回転) の上のつまみを左右に動かす。左が小さく、右が大きい (0〜100)。
+// - 音量の調節: 天狗の鼻 (2026-11-27 ユーザーが描き直した絵。回さずに表示) の上のつまみを左右に動かす。左が小さく、右が大きい (0〜100)。
 //   鼻の色は、小さいほど青、大きいほど赤 (間は紫)。開けるのはメニューからだけ。
 //   16問目だけは、鼻が真っ赤 (音量 100) のときに鼻 (つまみ以外の所) をドラッグすると、鼻をパーツとして取り出せる (drag.js)。
 //   鼻の左のベルは、ドラッグすると答えのパーツとして取り出せる (drag.js)。
-// - 音量はこのブラウザに覚えておく (次に開いたときも同じ音量)。保存できない環境では毎回 50 から。
+// - 音量はこのブラウザに覚えておく (次に開いたときも同じ音量)。保存できない環境では毎回 7 から (最初の音量は 7。2026-11-27)。
 // 開閉は "volume:opened" / "volume:closed"、音量の変更は "volume:changed" で知らせる (tutorial.js が使う)。
 
 (() => {
@@ -16,12 +16,14 @@
   const knob = document.getElementById("volume-knob");
   const valueEl = document.getElementById("volume-value");
 
-  const VOLUME_KEY = "quiz-meikyu.volume";
+  // 覚えておく音量のキー。2026-11-27 に初期値を 7 に変えたので、前に覚えた音量 (旧キー quiz-meikyu.volume) は使わない
+  const VOLUME_KEY = "quiz-meikyu.volume2";
+  const DEFAULT_VOLUME = 7; // 最初の音量。つまみは鼻の細い付け根のあたり (2026-11-27 ユーザー指示)
   const KNOB_MIN = 0.07; // つまみが動ける範囲 (鼻の幅に対する割合)。鼻の両端は細いので少し内側まで
   const KNOB_MAX = 0.93;
   const BLUE_HUE_DEG = -120; // 赤 (0度) から色相を -120度 回すと青。間は紫を通る
 
-  let volume = 50; // 0〜100
+  let volume = DEFAULT_VOLUME; // 0〜100
   const NOSE_TAKE_VOLUME = 100; // 16問目: 鼻が真っ赤 (音量 100) のときだけ、鼻を取り出せる (2026-11-20 ユーザー指示)
 
   // 鼻を取り出せるときは、鼻の上のカーソルを「掴める」にする
@@ -48,7 +50,7 @@
 
   let saved = null;
   try { saved = localStorage.getItem(VOLUME_KEY); } catch (_) { saved = null; }
-  applyVolume(saved !== null && saved !== "" && !Number.isNaN(Number(saved)) ? Number(saved) : 50, { save: false });
+  applyVolume(saved !== null && saved !== "" && !Number.isNaN(Number(saved)) ? Number(saved) : DEFAULT_VOLUME, { save: false });
 
   // つまみ: 鼻の上を左右にドラッグ。鼻のどこかを押すと、そこへつまみが飛ぶ
   let dragging = null; // pointerId
@@ -123,7 +125,7 @@
     if (!item) { if (e.target === menuPanel) closeMenu(); return; } // 外側を押したら閉じる
     playSound("click");
     if (item.dataset.menu === "volume") openVolume();
-    else if (item.dataset.menu === "tutorial") { closeMenu(); askTutorial(); } // 天狗が「もう一度見るかい？」と聞く (tutorial.js)
+    else if (item.dataset.menu === "tutorial") { closeMenu(); askTutorial(); } // 天狗が「もう一度見るか？」と聞く (tutorial.js)
     else closeMenu();
   });
 

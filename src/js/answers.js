@@ -13,6 +13,9 @@
 //   closeY : a と b の y 座標の差が tol (px) 以内か (横に並べる、のような「揃える」系の制約)
 //   rot    : a の回転角が value 度か (value は 0/90/180/270。ダブルクリックで90度ずつ時計回りに回る)。[90, 270] のように並べると、どれか
 //   rotated: a が回転している (0度以外ならどの向きでも良い)
+//   lowerRight: b が a の右下あたりにある (a の中心から見た b の向きが、3時の少し上 〜 6時の少し先。Q のしっぽ用)
+//
+// 座標は画像の中心だが、絵が画像の中で片寄っているパーツ (「、」) は、見た目の中心で比べる (GLYPH_OFFSET)。
 //
 // required のパーツがすべて解答ゾーンにあり、rules をすべて満たせば正解。
 // ゾーンに required 以外のパーツが混ざっているときは不正解 (関係ないパーツは外してから解答する)。
@@ -147,8 +150,8 @@ const ANSWER_CHECKS = {
     // Q の丸は、石板の黒い◯ (symbol_circle) でも良い (ユーザー指定 2026-11-24。12問目と同じく、どちらの丸でも使える)
     required: ["answer_circle|symbol_circle", "punct_comma", "latin_n_lower", "punct_exclam", "latin_N"],
     rules: [
-      { type: "ltX", a: "answer_circle|symbol_circle", b: "punct_comma" },
-      { type: "ltY", a: "answer_circle|symbol_circle", b: "punct_comma" },
+      // Q のしっぽ: 「、」が丸の右下あたり (2026-11-27 ユーザー指示で、右下ちょうどでなくても良いようにゆるめた)
+      { type: "lowerRight", a: "answer_circle|symbol_circle", b: "punct_comma" },
       { type: "ltX", a: "punct_comma", b: "latin_n_lower" },
       { type: "ltX", a: "latin_n_lower", b: "punct_exclam" },
       { type: "ltX", a: "punct_exclam", b: "latin_N" },
@@ -196,6 +199,10 @@ function ruleHolds(rule, byFile) {
     case "closeY": return Math.abs(b.y - a.y) <= rule.tol;
     case "rot": return [].concat(rule.value).includes(((a.rot % 360) + 360) % 360); // value は数か、数の配列 (どれか)
     case "rotated": return (((a.rot % 360) + 360) % 360) !== 0;
+    case "lowerRight": {
+      const deg = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+      return deg >= LOWER_RIGHT_FROM_DEG && deg <= LOWER_RIGHT_TO_DEG;
+    }
     default: return false;
   }
 }
@@ -214,7 +221,19 @@ function matchAnswer(index) {
   const candidates = cfg.required.map((key) => zoneEls.filter((e) => filesOf(key).includes(e.dataset.file)));
   if (candidates.some((c) => c.length === 0)) return null; // 必要なパーツが解答ゾーンに無い
 
-  const posOf = (el) => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), rot: Number(el.dataset.rot) || 0 });
+  const posOf = (el) => {
+    const p = { x: parseFloat(el.style.left), y: parseFloat(el.style.top), rot: Number(el.dataset.rot) || 0 };
+    const off = GLYPH_OFFSET[el.dataset.file];
+    if (off) { // 見た目の中心へずらす (パーツの回転に合わせてずれも回す。画面は y が下向きなので時計回り)
+      const size = parseFloat(el.style.height) || 0;
+      const t = p.rot * Math.PI / 180;
+      const ox = off[0] * size;
+      const oy = off[1] * size;
+      p.x += ox * Math.cos(t) - oy * Math.sin(t);
+      p.y += ox * Math.sin(t) + oy * Math.cos(t);
+    }
+    return p;
+  };
 
   // 同じ file が複数あるときは、どれか1つの組み合わせで全ルールを満たせば正解。
   // (required に同じ file を2回書いたときは、別々のパーツを使う)
@@ -233,6 +252,14 @@ function matchAnswer(index) {
   };
   return search(0, []);
 }
+
+// 絵が画像の中で片寄っているパーツの、見た目の中心のずれ (画像の大きさに対する割合。回転していないとき)。
+// 「、」は画像の左下に描かれている (200px の画像で、絵は x 59〜105・y 122〜170)
+const GLYPH_OFFSET = {
+  punct_comma: [-0.09, 0.23],
+};
+const LOWER_RIGHT_FROM_DEG = -25; // lowerRight: 3時 (0度) より少し上から
+const LOWER_RIGHT_TO_DEG = 115;   //              6時 (90度) より少し先まで (画面は y が下向きなので、時計回りが +)
 
 // 戻り値: true=正解 / false=不正解 / null=この問題はまだ判定ルール未設定
 function checkAnswer(index) {

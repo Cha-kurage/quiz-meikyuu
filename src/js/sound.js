@@ -15,7 +15,7 @@ const SOUND_FILES = {
   wind: "wind1.mp3",           // 風が吹く1 (約105秒。定期的に一部分だけ流す)
 };
 
-let masterVolume = 0.5; // 音量 (0〜1)。元スライドの初期設定 50。menu.js の音量調節 (天狗の鼻) で変える
+let masterVolume = 0.07; // 音量 (0〜1)。最初は 7 (2026-11-27 ユーザー指示。元スライドは 50)。menu.js の音量調節 (天狗の鼻) で変える
 
 const QUESTION_ECHO_MS = 160; // 出題音の「2重」: 1回目からこれだけ遅らせて、もう1回重ねて鳴らす
 
@@ -55,6 +55,64 @@ function playQuestionSoundTwice() {
   setTimeout(() => playSound("question"), QUESTION_REPEAT_MS);
 }
 
+// ---- 迷宮の門の音 (gate.js)。音の素材は使わず、その場で作る (Web Audio) ----
+// 開くとき: 低いゴゴゴ (低い音だけ残したノイズ) と、木がきしむような低い音。
+let gateAudioCtx = null;
+function gateCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!gateAudioCtx) gateAudioCtx = new AC();
+  if (gateAudioCtx.state === "suspended") gateAudioCtx.resume().catch(() => {});
+  return gateAudioCtx;
+}
+function gateNoise(ctx, seconds) {
+  const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < d.length; i++) { // ブラウンノイズ (低い音が多いザー)
+    last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+    d[i] = last * 3.5;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  return src;
+}
+function playGateSound(seconds = 4.5) { // seconds: 揺れ始めから開ききるまで (gate.js)
+  const ctx = gateCtx();
+  if (!ctx || masterVolume <= 0) return;
+  const t = ctx.currentTime;
+  const dur = seconds;
+  // ゴゴゴ
+  const rumble = gateNoise(ctx, dur);
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 140;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(1.6 * masterVolume, t + 0.35);
+  g.gain.setValueAtTime(1.6 * masterVolume, t + dur - 1.1);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  rumble.connect(lp).connect(g).connect(ctx.destination);
+  rumble.start(t);
+  rumble.stop(t + dur);
+  // ギィー (ゆっくり音程が上下する低い音)
+  const creak = ctx.createOscillator();
+  creak.type = "sawtooth";
+  creak.frequency.setValueAtTime(70, t + 0.9);
+  creak.frequency.linearRampToValueAtTime(95, t + 0.9 + dur * 0.25);
+  creak.frequency.linearRampToValueAtTime(62, t + dur - 0.8);
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 420;
+  bp.Q.value = 3;
+  const cg = ctx.createGain();
+  cg.gain.setValueAtTime(0, t + 0.9);
+  cg.gain.linearRampToValueAtTime(0.35 * masterVolume, t + 1.4);
+  cg.gain.linearRampToValueAtTime(0, t + dur - 0.6);
+  creak.connect(bp).connect(cg).connect(ctx.destination);
+  creak.start(t + 0.9);
+  creak.stop(t + dur - 0.5);
+}
 // ---- 風: 定期的に吹く。長い音源の中から、毎回ちがう場所を少しだけ流す ----
 // 風 (飾りの風のパーツ) を答えに使った後 (4問目 湘南乃風に正解した後) は、もう吹かない (2026-11-20 ユーザー指示)
 const windUsed = () => consumedBy["decor_wind"] !== undefined; // answers.js

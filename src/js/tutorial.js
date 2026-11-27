@@ -2,7 +2,7 @@
 // 画面の構成 (木・松明・風・石板・解答ゾーン・早押しボタン) はそのまま。石板には例題 (富士山) のパーツだけを出す。
 // セリフは元スライドの2〜29ページを、Web 版の操作 (早押しボタン、ドラッグ、ダブルクリック、「これで回答」) に合わせて書き直したもの。
 // waitFor があるセリフは、その操作をするまで先へ進めない (できたら少し待って自動で次へ)。
-// ページを開くと最初に始まる。メニューの「説明をもう一度見る」では、まず偽天狗が「もう一度チュートリアルを見るかい？」と聞き、
+// ページを開くと最初に始まる。メニューの「説明をもう一度見る」では、まず偽天狗が「もう一度チュートリアルを見るか？」と聞き、
 // 「はい」で始まる (終わると元の問題に戻る)。「いいえ」なら天狗は引っ込む。
 // 聞いてきた偽天狗は、ドラッグするとパーツとして取り出せる (どの問題でも。最終問題「天狗」の答えに使う: drag.js)。
 
@@ -19,7 +19,7 @@
   const AUTO_NEXT_MS = 700;  // 操作ができてから次のセリフへ進むまで
   const CHECK_MS = 150;      // 操作ができたかを見に行く間隔
   const MOVE_MS = 650;       // 偽天狗が早押しボタンの横へ行く / 戻る時間 (CSS の transition より少し長く)
-  const REVEAL_HOLD_MS = 2200; // 「答えは 〜 だよ」を言い終えてから戻るまで
+  const REVEAL_HOLD_MS = 2200; // 「答えは 〜 である」を言い終えてから戻るまで
 
   const part = (file) => document.querySelector(`.part.tut-part[data-file="${file}"]`);
   const pos = (el) => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top) });
@@ -52,32 +52,34 @@
   // movable: そのセリフの間だけ動かせる例題のパーツ (それ以外のセリフでは、例題のパーツも動かない)
   // submit: そのセリフの間だけ「これで回答」を押せる
   // buzzer: そのセリフの間だけ早押しボタンを押せる / menu: このセリフから先はメニューを開ける (押してほしいときまでは押せない)
+  // 2026-11-27 ユーザー指示: 天狗の一人称は「私」、口調は厳かに (〜するがよい / 〜のだ / 〜であろう)。
   const STEPS = [
-    { text: "やあ！はじめまして！\n僕が君たちの案内役を務めるよ" },
-    { text: "君たちが開いたのは、\n最後のクイズを解かないと決して出られない「Quiz迷宮」の門" },
-    { text: "これから君たちには、クイズに挑戦してもらうよ" },
-    { text: "ただ、クイズといっても緊張しなくていいよ。\n僕が君たちをサポートするから" },
-    { text: "まずは基本的な操作から。" },
-    { text: "左上の三本線がメニューのボタン。音量を調節したり、この説明を\nもう一度見たりできるよ。試しにメニューを開いて「音量の調節」を押してみて！", focus: ["#menu-btn", '[data-menu="volume"]'], waitFor: "volumeOpened", menu: true },
-    { text: "つまみを左右に動かすと、音量が変わるよ。\n聞きやすい大きさにして「閉じる」を押してね", waitFor: "volumeClosed" },
-    { text: "肝心のクイズについてだけど、基本的には早押しボタンを押して答える、\nいわゆる早押しクイズをやってもらうよ", focus: ["#buzzer-btn"] },
-    { text: "これは解答ゾーンというよ！この中に、イラストや文字を使って\nクイズの答えを作れば、それが君たちの回答になるよ", focus: ["#answer-zone"] },
-    { text: "早押しボタンを押さずにしばらく待つと、\n僕がクイズの答えを教えてあげる。" },
-    // 答えが出たら、偽天狗が早押しボタンの横へ行って答えを言い、戻ってきて次のセリフ「ほらね！」へ (reveal)
-    { text: "嘘だと思うなら、一度例題を見てみよう。早押しボタンを押すと問題が流れるよ！\n押したら、そのまま答えが出るまで待ってね", focus: ["#buzzer-btn"], waitFor: "revealed", buzzer: true },
-    { text: "ほらね！石板には、答えになるパーツが置いてあるよ。今回は\n「富」「＋」「ー」「山」の4つを解答ゾーンに置いて回答すれば正解になるよ", focus: TUT_PARTS },
-    { text: "ただし、正しい配置で回答しないと不正解になるから注意してね" },
-    { text: "まずは「富」をドラッグして、解答ゾーンに置いてみよう", focus: ['.part[data-file="tut_fu"]', "#answer-zone"], waitFor: "fuPlaced", movable: ["tut_fu"] },
-    { text: "次に「＋」と「ー」を、「士」の形になるように上下に重ねて、\n「富」の右に置こう", focus: ['.part[data-file="tut_plus"]', '.part[data-file="tut_bar"]'], waitFor: "shiPlaced", movable: ["tut_plus", "tut_bar"] },
-    { text: "最後に「山」。今は逆さまだね。パーツをダブルタップすると\n90度回るから、2回ダブルタップして元の向きにして、「士」の右に置こう", focus: ['.part[data-file="tut_yama"]'], waitFor: "yamaPlaced", movable: ["tut_yama"] },
-    { text: "これで「富士山」の完成！\n「これで回答」を押そう", focus: ["#submit-btn"], waitFor: "solved", submit: true },
-    { text: "⭕が出て正解の音が鳴れば、君の回答は正解だということだ" },
-    { text: "もし❌が出て不正解の音が鳴ったら、\nその回答で正しいかよく考えてから、やり直してね" },
-    { text: "ちなみに、一度回答に使ったパーツは、全ての問題から無くなるよ。\n前に戻っても元には戻らないから注意してね" },
-    { text: "クイズの流れは、だいたい理解できたかな？" },
-    { text: "最後のクイズに正解すると見事クリア！\n君たちは晴れてこの迷宮から脱出できる" },
-    { text: "ただし、最後のクイズが解けないと、永遠にこの迷宮をさまようことになるから\n頑張ってね！" },
-    { text: "それでは、Quiz迷宮への挑戦、スタート！", nextLabel: "スタート ▶" },
+    { text: "よくぞ参った、挑戦者たちよ。\n私が君たちの案内役を務めよう" },
+    { text: "君たちが開いたのは、\n最後のクイズを解かねば決して出られぬ「Quiz迷宮」の門" },
+    { text: "君たちは最後のクイズに正解できるまで、\nこのQuiz迷宮の壁の中から出ることはできない。" }, // 2026-11-27 ユーザー指示で追加
+    { text: "これより君たちには、クイズに挑んでもらう" },
+    { text: "何、クイズは苦手？？？\nまあよい、では私が特別にサポートするとしよう" },
+    { text: "まずは基本の操作から教えよう" },
+    { text: "左上の三本線がメニューのボタンだ。音量の調節や、この説明を\nもう一度見ることができる。メニューを開き「音量の調節」を押してみるがよい", focus: ["#menu-btn", '[data-menu="volume"]'], waitFor: "volumeOpened", menu: true },
+    { text: "つまみを左右に動かすと、音量が変わる。\n聞きやすい大きさにしたら「閉じる」を押すのだ", waitFor: "volumeClosed" },
+    { text: "肝心のクイズについてだが、早押しボタンを押して答える、\nいわゆる早押しクイズに挑んでもらう", focus: ["#buzzer-btn"] },
+    { text: "これは解答ゾーンという。この中にイラストや文字を並べて\nクイズの答えを作れば、それが君たちの回答となる", focus: ["#answer-zone"] },
+    { text: "早押しボタンを押さずにしばらく待てば、\n私がクイズの答えを教えてやろう" },
+    // 答えが出たら、偽天狗が早押しボタンの横へ行って答えを言い、戻ってきて次のセリフ「見たであろう」へ (reveal)
+    { text: "疑うならば、例題を見てみるがよい。早押しボタンを押せば問題が流れる。\n押したら、そのまま答えが出るまで待つのだ", focus: ["#buzzer-btn"], waitFor: "revealed", buzzer: true },
+    { text: "見たであろう。石板には、答えとなるパーツが置いてある。今回は\n「富」「＋」「ー」「山」の4つを解答ゾーンに置いて回答すれば正解となる", focus: TUT_PARTS },
+    { text: "ただし、正しい配置で回答せねば不正解となる。心してかかるのだ" },
+    { text: "まずは「富」をドラッグして、解答ゾーンに置いてみるがよい", focus: ['.part[data-file="tut_fu"]', "#answer-zone"], waitFor: "fuPlaced", movable: ["tut_fu"] },
+    { text: "次に「＋」と「ー」を、「士」の形になるよう上下に重ねて、\n「富」の右に置くのだ", focus: ['.part[data-file="tut_plus"]', '.part[data-file="tut_bar"]'], waitFor: "shiPlaced", movable: ["tut_plus", "tut_bar"] },
+    { text: "最後に「山」。今は逆さまになっておる。パーツをダブルタップすると\n90度回るゆえ、2回ダブルタップして元の向きに戻し、「士」の右に置くのだ", focus: ['.part[data-file="tut_yama"]'], waitFor: "yamaPlaced", movable: ["tut_yama"] },
+    { text: "これで「富士山」の完成だ。\n「これで回答」を押すがよい", focus: ["#submit-btn"], waitFor: "solved", submit: true },
+    { text: "⭕が出て正解の音が鳴れば、その回答は正解ということだ" },
+    { text: "もし❌が出て不正解の音が鳴ったなら、\nその回答で正しいかよく考えてから、やり直すがよい" },
+    { text: "なお、一度回答に使ったパーツは、全ての問題から消えてしまう。\n前の問題に戻っても元には戻らぬゆえ、気をつけるのだ" },
+    { text: "クイズの流れは、おおよそ理解できたであろう" },
+    { text: "最後のクイズに正解すれば見事クリア。\n君たちは晴れてこの迷宮から脱出できる" },
+    { text: "ただし、最後のクイズが解けねば、永遠にこの迷宮をさまようことになる。\n健闘を祈っておるぞ" },
+    { text: "では、Quiz迷宮への挑戦を始めるがよい！", nextLabel: "スタート ▶" },
   ];
 
   let active = false;
@@ -142,7 +144,7 @@
     const step = STEPS[stepIndex];
     const waiting = step.waitFor && !CONDITIONS[step.waitFor]();
     nextBtn.disabled = waiting;
-    nextBtn.textContent = waiting ? "やってみよう" : (step.nextLabel || "次へ ▶");
+    nextBtn.textContent = waiting ? "やってみよ" : (step.nextLabel || "次へ ▶");
   }
 
   function showStep(i) {
@@ -166,7 +168,7 @@
 
   const canMove = (el) => active && el.classList.contains("tut-part") && (STEPS[stepIndex].movable || []).includes(el.dataset.file);
 
-  // ---- 例題の答え: 偽天狗が早押しボタンの横へ行って「答えは 〜 だよ」と言い、戻ってきて「ほらね！」へ ----
+  // ---- 例題の答え: 偽天狗が早押しボタンの横へ行って「答えは 〜 である」と言い、戻ってきて「見たであろう」へ ----
   let revealTimers = [];
   let revealing = false;
   function clearReveal() {
@@ -177,15 +179,15 @@
   }
   const later = (fn, ms) => revealTimers.push(setTimeout(fn, ms));
 
-  function reveal(answer) {
+  function reveal(answer, reading) {
     if (!active || STEPS[stepIndex].waitFor !== "revealed" || revealing) return;
     revealing = true;
     clearFocus();
     root.classList.add("reveal", "moving"); // 移動中は吹き出しを隠す
     later(() => {
       root.classList.remove("moving");
-      // 「答えは / (答え: 大きめの赤字) / だよ」の3行
-      typeText([{ text: "答えは" }, { text: answer, cls: "tut-answer" }, { text: "だよ" }], () => later(goBack, REVEAL_HOLD_MS));
+      // 「答えは / (答え: 大きめの赤字)（ふりがな） / である」の3行。ふりがなは答えと同じ行に続ける (CSS)
+      typeText([{ text: "答えは" }, { text: answer, cls: "tut-answer" }, { text: reading || "", cls: "tut-reading" }, { text: "である" }], () => later(goBack, REVEAL_HOLD_MS));
     }, MOVE_MS);
     function goBack() {
       root.classList.add("moving");
@@ -198,7 +200,7 @@
       }, MOVE_MS);
     }
   }
-  document.addEventListener("tutorial:answer", (e) => reveal(e.detail.answer));
+  document.addEventListener("tutorial:answer", (e) => reveal(e.detail.answer, e.detail.reading));
 
   // 操作待ちのセリフで、できたかを見に行く。できたら少し待って次へ
   function check() {
@@ -230,7 +232,8 @@
     delete solveTimes[TUTORIAL_INDEX];
   }
 
-  function startTutorial() {
+  // hold: 準備だけして、しゃべり始めるのは beginTutorial() まで待つ (ページを開いたときは、門が開いてから: gate.js)
+  function startTutorial({ hold = false } = {}) {
     closeAsk();
     returnIndex = active ? returnIndex : (currentQuestionIndex === TUTORIAL_INDEX ? 0 : currentQuestionIndex);
     active = true;
@@ -238,8 +241,11 @@
     revealDone = false;
     resetExample();
     stage.classList.add("tutorial");
-    root.hidden = false;
     startQuestion(TUTORIAL_INDEX); // 出題ゾーンは例題、石板は例題のパーツ
+    if (!hold) beginTutorial();
+  }
+  function beginTutorial() {
+    root.hidden = false;
     showStep(0);
     clearInterval(checkTimer);
     checkTimer = setInterval(check, CHECK_MS);
@@ -258,7 +264,7 @@
     startQuestion(returnIndex);
   }
 
-  // ---- 「もう一度チュートリアルを見るかい？」 ----
+  // ---- 「もう一度チュートリアルを見るか？」 ----
   let asking = false;
   function askTutorial() {
     asking = true;
@@ -271,7 +277,7 @@
     nextBtn.hidden = true;
     yesBtn.hidden = false;
     noBtn.hidden = false;
-    typeText("もう一度チュートリアルを見るかい？");
+    typeText("もう一度チュートリアルを見るか？");
   }
   function closeAsk() {
     if (!asking) return;
@@ -308,6 +314,7 @@
   if (skipBtn) skipBtn.addEventListener("click", () => { playSound("click"); endTutorial(); });
   document.addEventListener("volume:opened", () => { volumeOpenedSinceStep = true; });
 
-  // ページを開いたら、まずチュートリアルから
-  startTutorial();
+  // ページを開いたら、まずチュートリアルから。門 (gate.js) が開いてから、偽天狗がしゃべり始める
+  startTutorial({ hold: true });
+  document.addEventListener("gate:opened", () => { if (active) beginTutorial(); }, { once: true });
 })();

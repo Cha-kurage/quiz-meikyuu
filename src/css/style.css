@@ -406,7 +406,7 @@ body {
 .part.final-part.in-ask,
 .part.final-part.in-nose { display: none; }
 
-/* ---------- 本編の答え: 偽天狗が早押しボタンの横に出て「答えは / ○○ / だよ」と言う (quiz.js) ---------- */
+/* ---------- 本編の答え: 偽天狗が早押しボタンの横に出て「答えは / ○○ / である」と言う (quiz.js) ---------- */
 #answer-tengu {
   position: absolute;
   inset: 0;
@@ -414,18 +414,20 @@ body {
   pointer-events: none;
 }
 #answer-tengu[hidden] { display: none; }
+/* 2026-11-27 ユーザー指示: 天狗は早押しボタンの左 (面が右を向いているので)、吹き出しはその右でしっぽは左向き */
 #answer-tengu img {
   position: absolute;
-  left: 425px;
-  top: 537px; /* 天狗の口 (絵の上から約43%) が吹き出しのしっぽと同じ高さになるように (2026-11-24 ユーザー指示) */
+  left: 52px;
+  top: 490px; /* 天狗の口 (絵の上から約70%。2026-11-27 の面の絵) が吹き出しのしっぽと同じ高さになるように (2026-11-24 ユーザー指示) */
   height: 175px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5));
 }
 #answer-tengu .at-bubble {
   position: absolute;
-  right: 1200px; /* 天狗のほうに右端をそろえ、長い答えは左へ伸ばす */
+  left: 210px; /* 天狗のほうに左端をそろえ、長い答えは右へ伸ばす */
   top: 528px; /* 問題文 (3行) の下から早押しボタンの上まで。答えの文字が出ていた所 */
   min-width: 260px;
+  max-width: 340px; /* 出題ゾーンの右端 (560) まで。入りきらないふりがなは次の行へ */
   padding: 6px 18px;
   border: 3px solid #333;
   border-radius: 20px;
@@ -434,13 +436,17 @@ body {
   font-size: 24px;
   line-height: 1.2;
   text-align: center;
-  white-space: nowrap;
 }
 #answer-tengu .at-bubble::before,
 #answer-tengu .at-bubble::after { content: ""; position: absolute; border-style: solid; border-color: transparent; }
-#answer-tengu .at-bubble::before { right: -22px; bottom: 20px; border-width: 12px 0 12px 22px; border-left-color: #333; }
-#answer-tengu .at-bubble::after { right: -17px; bottom: 23px; border-width: 9px 0 9px 18px; border-left-color: #fff; }
-#answer-tengu .tut-answer { color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.15; }
+/* しっぽは左 (天狗の口) を指す。上からの位置で決めるので、ふりがなが2行になっても天狗の口の高さのまま */
+#answer-tengu .at-bubble::before { left: -22px; top: 73px; border-width: 12px 22px 12px 0; border-right-color: #333; }
+#answer-tengu .at-bubble::after { left: -17px; top: 76px; border-width: 9px 18px 9px 0; border-right-color: #fff; }
+#answer-tengu .tut-answer { color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.15; white-space: nowrap; }
+/* ふりがな「（こぶし）」: 答えの後ろに続けて、少し小さめの赤字。入りきらないときは丸ごと次の行へ */
+#answer-tengu .tut-reading,
+#tut-text .tut-reading { display: inline-block; color: #e02020; font-weight: bold; white-space: nowrap; }
+#answer-tengu .tut-reading { font-size: 1.05em; }
 /* 天狗が答えを言っている間は、早押しボタンの上の吹き出しは出さない (重なるので) */
 #stage.answer-told #buzzer-hint { display: none; }
 #answer-tengu.pop { animation: tengu-pop .35s ease-out; }
@@ -550,8 +556,8 @@ body {
 #volume-bell.locked { cursor: default; } /* チュートリアル中・15問目の後は取り出せない */
 #volume-track {
   position: relative;
-  width: 187px;
-  height: 118px; /* 鼻の画像 432x272 (2026-11-20 ユーザーが描き直したもの) と同じ比率 */
+  width: 220px;
+  height: 59px; /* 鼻の画像 215x58 (2026-11-27 ユーザーが描き直した「音量.png」) と同じ比率 */
   cursor: pointer;
   touch-action: none;
 }
@@ -560,8 +566,7 @@ body {
 #volume-nose {
   width: 100%;
   height: 100%;
-  transform: rotate(180deg);
-  pointer-events: none;
+  pointer-events: none; /* 新しい絵 (2026-11-27) は最初から 左が細く・右が太い 向きなので回さない */
   user-select: none;
 }
 /* つまみ: 縦長の角丸四角 */
@@ -665,35 +670,38 @@ body {
 #tut-buttons #tut-next { min-width: 128px; background: #c9a24a; color: #2b2622; }
 #tut-buttons button:disabled { opacity: .45; cursor: default; }
 #tut-buttons #tut-next:disabled { opacity: .7; background: #e8dcbc; }
-/* 例題の答え: 偽天狗が早押しボタンの横へ移動し、答えが出る位置あたりで「答えは 富士山 だよ」と言う (tutorial.js) */
-#tutorial.reveal #tut-tengu { left: 425px; bottom: 216px; height: 175px; } /* 天狗の口が吹き出しのしっぽと同じ高さ (2026-11-24) */
+/* 例題の答え: 偽天狗が早押しボタンの横へ移動し、答えが出る位置あたりで「答えは 富士山 である」と言う (tutorial.js) */
+#tutorial.reveal #tut-tengu { left: 52px; bottom: 263px; height: 175px; } /* 早押しボタンの左 (2026-11-27) */ /* 天狗の口が吹き出しのしっぽと同じ高さ (2026-11-24) */
 #tutorial.reveal #tut-bubble {
-  left: 110px;
+  left: 210px; /* 天狗の右 (2026-11-27) */
   right: auto;
   top: 455px; /* 出題ゾーンで答えが出る位置 (#question-status) あたり。早押しボタンに被らない高さ */
   bottom: auto;
-  width: 290px;
+  width: auto;
+  min-width: 290px;
+  max-width: 340px;
   min-height: 0;
   justify-content: center;
   padding: 16px 20px;
 }
-#tutorial.reveal #tut-text { flex: none; font-size: 32px; line-height: 1.25; text-align: center; white-space: nowrap; }
-/* 「答えは / 富士山 / だよ」の答えの部分: 少し大きめの赤字 */
-#tut-text .tut-answer { color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.2; }
+#tutorial.reveal #tut-text { flex: none; font-size: 32px; line-height: 1.25; text-align: center; white-space: normal; }
+/* 「答えは / 富士山 / である」の答えの部分: 少し大きめの赤字 */
+#tut-text .tut-answer { display: inline; color: #e02020; font-size: 1.5em; font-weight: bold; line-height: 1.2; white-space: nowrap; }
+#tut-text .tut-reading { font-size: 1.05em; }
 #tutorial.reveal #tut-buttons { display: none; }
-/* しっぽは右 (天狗のほう) を指す */
-#tutorial.reveal #tut-bubble::before { left: auto; right: -22px; top: auto; bottom: 34px; border-width: 12px 0 12px 22px; border-color: transparent transparent transparent #333; }
-#tutorial.reveal #tut-bubble::after { left: auto; right: -17px; top: auto; bottom: 37px; border-width: 9px 0 9px 18px; border-color: transparent transparent transparent #fff; }
+/* しっぽは左 (天狗のほう) を指す (2026-11-27 に左右反転) */
+#tutorial.reveal #tut-bubble::before { left: -22px; right: auto; top: auto; bottom: 34px; border-width: 12px 22px 12px 0; border-color: transparent #333 transparent transparent; }
+#tutorial.reveal #tut-bubble::after { left: -17px; right: auto; top: auto; bottom: 37px; border-width: 9px 18px 9px 0; border-color: transparent #fff transparent transparent; }
 /* 天狗が移動している間は、吹き出しを出さない */
 #tutorial.moving #tut-bubble { visibility: hidden; }
 
-/* 「もう一度チュートリアルを見るかい？」(メニューの「説明をもう一度見る」): はい / いいえ で答える */
+/* 「もう一度チュートリアルを見るか？」(メニューの「説明をもう一度見る」): はい / いいえ で答える */
 #tut-buttons #tut-yes,
 #tut-buttons #tut-no { min-width: 110px; }
 #tut-buttons #tut-yes { background: #c9a24a; color: #2b2622; }
 #tut-buttons [hidden] { display: none; }
 #tut-buttons { gap: 10px; }
-/* 「もう一度見るかい？」と聞いてくる偽天狗は、ドラッグするとパーツとして取り出せる (drag.js。どの問題でも) */
+/* 「もう一度見るか？」と聞いてくる偽天狗は、ドラッグするとパーツとして取り出せる (drag.js。どの問題でも) */
 #tutorial.ask-final #tut-tengu { pointer-events: auto; cursor: grab; touch-action: none; }
 
 /* 例題の説明中、いま使っていないパーツは動かせない / 回答できないセリフでは「これで回答」を押せない */
@@ -708,4 +716,245 @@ body {
 @keyframes tut-glow {
   0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 210, 60, .9)) drop-shadow(0 0 10px rgba(255, 210, 60, .6)); }
   50% { filter: drop-shadow(0 0 10px rgba(255, 220, 80, 1)) drop-shadow(0 0 24px rgba(255, 200, 40, .9)); }
+}
+
+/* ---------- 迷宮の門 (gate.js): 最初 (ページを開いたとき) と最後 (16問目に正解したとき) に開く (2026-11-27) ----------
+   上に「Quiz迷宮」の額をかけた横木、その下に朱塗りの木の扉が左右2枚 (鉄の帯と鋲、金の輪の取っ手)。
+   開くときは、少し揺れてから扉が奥へ回って開き、向こうから光が差す。絵は CSS だけで描いている */
+#gate {
+  position: absolute;
+  inset: 0;
+  z-index: 30000; /* チュートリアルの吹き出し (25000) やメニューより手前 */
+  overflow: hidden;
+  /* 扉の向こうは透けない (2026-11-27 ユーザー指示: 例題が透けて見えないように)。
+     開き始めは暗く、光がだんだん満ちる。門 (光ごと) が消えたときに、はじめて例題が見える */
+  background: #1a0e07;
+  transition: opacity 1s ease; /* gate.js の FADE_MS と同じ */
+}
+#gate[hidden] { display: none; }
+#gate.fading { opacity: 0; pointer-events: none; }
+#gate.fading.blocking { pointer-events: auto; } /* 最初: 門が消えてから偽天狗がしゃべり始めるまでの間 */
+
+/* 扉の向こうの光。最初は向こうに迷宮 (いつもの画面) が見えるように、真ん中だけ明るい半透明 */
+#gate .gate-light {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  /* 2026-11-27 ユーザー指示: もう少し濃く、大きく / 透けないように (端まで不透明) */
+  background: radial-gradient(ellipse 75% 90% at 50% 58%, #fffbe4 0%, #ffde82 30%, #f2b24c 55%, #c97c2c 78%, #7a4216 100%);
+  transition: opacity 2.6s ease .5s;
+}
+#gate.open .gate-light { opacity: 1; }
+/* 最後は、向こうが一面の光 */
+#gate.final .gate-light {
+  background:
+    radial-gradient(ellipse 45% 60% at 50% 58%, #fffdf2 0%, #ffe39a 38%, #e0902f 72%, #6b3412 100%);
+}
+
+/* 最後: 光の中の「迷宮の門が開いた！」 */
+#gate .gate-message {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 132px;
+  display: none;
+  text-align: center;
+  color: #5a2a0e;
+  opacity: 0;
+  transform: translateY(20px) scale(.96);
+  transition: opacity 1.2s ease 2.4s, transform 1.4s ease 2.4s;
+}
+#gate.final .gate-message { display: block; }
+#gate.final.open .gate-message { opacity: 1; transform: none; }
+#gate .gate-message-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+  font-size: 84px;
+  font-weight: bold;
+  letter-spacing: .08em;
+  text-shadow: 0 0 24px rgba(255, 255, 255, .9), 0 2px 0 rgba(255, 255, 255, .6);
+}
+#gate .gate-message-sub { margin-top: 6px; font-size: 36px; font-weight: bold; letter-spacing: .1em; }
+/* クリア後: 「あなたの早押しクイズ力」の画像と、保存・ポスト・閉じる。門が開ききってから出す (gate.js が done を付ける) */
+#gate #gate-rank-img {
+  display: block;
+  width: 560px; /* 画像は 1200x630 */
+  height: 294px;
+  margin: 18px auto 0;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(60, 25, 5, .55);
+  -webkit-touch-callout: default; /* スマホで長押しして保存できるように */
+  user-select: auto;
+}
+#gate .gate-rank-hint { margin-top: 6px; font-size: 18px; color: #7a4a22; }
+#gate .gate-rank-hint,
+#gate .gate-actions { opacity: 0; transition: opacity .6s ease; pointer-events: none; }
+#gate.done .gate-rank-hint,
+#gate.done .gate-actions { opacity: 1; pointer-events: auto; }
+#gate .gate-actions { display: flex; justify-content: center; gap: 18px; margin-top: 14px; }
+#gate .gate-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 66px;
+  padding: 0 30px;
+  border: 3px solid #2b2622;
+  border-radius: 33px;
+  background: linear-gradient(180deg, #f1d68c, #c9a24a);
+  color: #2b2622;
+  font: inherit;
+  font-size: 26px;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .4);
+  cursor: pointer;
+}
+#gate .gate-action-post { background: linear-gradient(180deg, #3a3a3a, #111); color: #fff; } /* X の色 */
+#gate .gate-action:focus-visible { outline: 4px solid #fff; outline-offset: 4px; }
+
+/* 扉 */
+#gate .gate-doors {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 118px; /* 横木の下から */
+  bottom: 0;
+  perspective: 2200px;
+}
+#gate.shaking .gate-doors { animation: gate-shake .9s linear; } /* gate.js の SHAKE_MS と同じ */
+@keyframes gate-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-3px, 1px); }
+  20% { transform: translate(3px, -1px); }
+  30% { transform: translate(-3px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  55% { transform: translate(-2px, 1px); }
+  70% { transform: translate(2px, 0); }
+  85% { transform: translate(-1px, 0); }
+}
+#gate .gate-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  box-sizing: border-box;
+  /* 朱塗りの板 (縦に並んだ板と、その間の溝) と、うっすら木目 */
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 96px, rgba(40, 8, 4, .55) 96px 100px),
+    repeating-linear-gradient(3deg, rgba(255, 255, 255, .03) 0 6px, rgba(0, 0, 0, .05) 6px 13px),
+    linear-gradient(180deg, #a83a24 0%, #8c2c1a 55%, #6e2012 100%);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, .55);
+  transition: transform 3.6s cubic-bezier(.5, 0, .25, 1); /* gate.js の SWING_MS と同じ。重い扉がゆっくり動き出す感じ */
+  backface-visibility: hidden;
+}
+#gate .gate-door-left { left: 0; transform-origin: left center; border-right: 4px solid #2a0c06; }
+#gate .gate-door-right { right: 0; transform-origin: right center; border-left: 4px solid #2a0c06; }
+/* 開く: 扉は奥へ回る */
+#gate.open .gate-door-left { transform: rotateY(82deg); }
+#gate.open .gate-door-right { transform: rotateY(-82deg); }
+/* 最後: 閉じた門がすっと現れる (gate.js の FINAL_FADE_IN_MS と同じ) */
+#gate.final { transition-duration: .6s; }
+
+/* 鉄の帯と鋲 */
+#gate .gate-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 46px;
+  background:
+    radial-gradient(circle at 50% 45%, #f0d48a 0 4px, #b08a3c 5px, #3a2a12 7.5px, rgba(0, 0, 0, 0) 8.5px) 22px 0 / 64px 46px repeat-x,
+    linear-gradient(180deg, #3a3330 0%, #1d1816 45%, #2b2522 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, .5), 0 -1px 0 rgba(255, 255, 255, .08);
+}
+#gate .gate-band.top { top: 12%; }
+#gate .gate-band.bottom { bottom: 12%; }
+/* 金の輪の取っ手 (扉の合わせ目の近く) */
+#gate .gate-ring {
+  position: absolute;
+  top: 46%;
+  width: 74px;
+  height: 74px;
+  border: 9px solid #c9a24a;
+  border-radius: 50%;
+  box-sizing: border-box;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, .55), inset 0 0 0 2px rgba(255, 240, 190, .35);
+}
+#gate .gate-ring::before { /* 輪を留める金具 */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  width: 30px;
+  height: 30px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f6e0a0, #a8822f 60%, #5a4217);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, .5);
+}
+#gate .gate-door-left .gate-ring { right: 44px; }
+#gate .gate-door-right .gate-ring { left: 44px; }
+
+/* 横木と「Quiz迷宮」の額 */
+#gate .gate-lintel {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: 0;
+  height: 118px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .08) 0 4px, rgba(0, 0, 0, 0) 4px),
+    linear-gradient(180deg, #3b2418 0%, #2a170e 60%, #1a0d07 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .6);
+}
+#gate .gate-plate {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  padding: 8px 46px 10px;
+  border: 6px solid #c9a24a;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #1c1410, #2e2118);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .6), inset 0 0 0 2px rgba(0, 0, 0, .6);
+  color: #e9cf86;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+  font-size: 54px;
+  font-weight: bold;
+  letter-spacing: .12em;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .7);
+}
+
+/* 「門を開ける」/「閉じる」 */
+#gate .gate-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 175px; /* 下の鉄の帯より上 */
+  transform: translateX(-50%);
+  min-width: 300px;
+  height: 78px;
+  padding: 0 40px;
+  border: 4px solid #2b2622;
+  border-radius: 39px;
+  background: linear-gradient(180deg, #f1d68c, #c9a24a);
+  color: #2b2622;
+  font: inherit;
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: .1em;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .55);
+  cursor: pointer;
+}
+#gate .gate-btn[hidden] { display: none; }
+#gate #gate-open { animation: gate-btn-pulse 1.8s ease-in-out infinite; }
+@keyframes gate-btn-pulse {
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, .55), 0 0 0 0 rgba(241, 214, 140, .6); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, .55), 0 0 0 16px rgba(241, 214, 140, 0); }
+}
+#gate .gate-btn:focus-visible { outline: 4px solid #fff; outline-offset: 4px; }
+
+/* 動きを減らす設定の人には、揺れと回転を短く */
+@media (prefers-reduced-motion: reduce) {
+  #gate.shaking .gate-doors { animation: none; }
+  #gate .gate-door { transition-duration: .4s; }
 }
