@@ -268,7 +268,7 @@
       case "mark": el.classList.add("in-mark"); restoreMarkCircle(); break;
       case "bell": el.classList.add("in-volume"); refreshVolumeBell(); break;
       case "nose": el.classList.add("in-nose"); refreshVolumeNose(); break;
-      case "ask": el.classList.add("in-ask"); break;
+      case "ask": el.classList.add("in-ask"); refreshAnswerTengu(); break; // 答えを言う天狗の絵がまた出る (quiz.js)
     }
   }
 
@@ -310,7 +310,20 @@
     takeable: tenguTakeable,
     part: tenguPart,
     hideClass: "in-ask",
-    onTake: () => closeTutorialAsk(), // 聞くのをやめて、天狗はパーツになる (tutorial.js)
+    onTake: () => { closeTutorialAsk(); refreshAnswerTengu(); }, // 聞くのをやめて、天狗はパーツになる (tutorial.js)
+  });
+
+  // 本編で答えを言っている偽天狗も、ドラッグすると偽天狗を取り出せる (2026-11-27 ユーザー指示)。
+  // 取り出したら、答えを言う天狗の絵は消えて吹き出しだけが残る (quiz.js の refreshAnswerTengu)
+  const answerTengu = document.getElementById("answer-tengu");
+  const answerTenguTakeable = () => !inTutorial() && !answerTengu.hidden && !isQuestionSolved(FINAL_INDEX) &&
+    !!tenguPart() && tenguPart().classList.contains("in-ask");
+  pressToTake(answerTengu.querySelector("img"), {
+    pressable: answerTenguTakeable,
+    takeable: answerTenguTakeable,
+    part: tenguPart,
+    hideClass: "in-ask",
+    onTake: () => refreshAnswerTengu(), // quiz.js
   });
 
   layer.addEventListener("pointermove", (e) => {

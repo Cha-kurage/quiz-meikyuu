@@ -153,12 +153,11 @@ document.addEventListener("question:solved", (e) => {
 
 // ---- 16問目 (最終問題) ----
 // 15問目に正解して少したったら、16問目へ進む。16問目は白紙: 問題番号・タイマー・問題文は出さず、
-// 早押しボタンは見えるが押しても反応しない。石板・解答ゾーンも空 (16問目用のパーツ = 偽天狗と鼻だけが出る)。
-// 「これで回答」・戻る/進む は使える。16問目へは、15問目に正解した後なら「進む」でも行ける。
+// 早押しボタンは見えるが押しても反応しない。石板には、まだ使っていないパーツがそのまま残る (判定は偽天狗と鼻だけを見る)。
+// 「これで回答」・戻る/進む は使える。16問目へは、15問目に正解していなくても「進む」で行ける (2026-11-27)。
 const LAST_QUESTION_INDEX = QUESTIONS.length - 1; // 15問目
 const FINAL_DELAY_MS = 1500; // 正解の音と⭕ (出る場合) を見せてから切り替える
 const onFinalPage = () => currentQuestionIndex === FINAL_INDEX;
-const finalUnlocked = () => isQuestionSolved(LAST_QUESTION_INDEX);
 
 document.addEventListener("question:solved", (e) => {
   if (e.detail.index !== LAST_QUESTION_INDEX) return;
@@ -188,7 +187,17 @@ function showAnswerTengu(q, { pop = false } = {}) {
   answerTengu.querySelector(".tut-reading").textContent = readingLabel(q); // 漢字の答えは「（ふりがな）」も
   answerTengu.hidden = false;
   answerTengu.classList.toggle("pop", pop);
+  refreshAnswerTengu();
   stage.classList.add("answer-told");
+}
+// 偽天狗のパーツをまだ取り出していなければ、天狗が答えを言い、その天狗をドラッグして取り出せる (drag.js)。
+// 取り出した後 (どこから取り出しても) は、天狗の絵は出さず、吹き出しだけ (2026-11-27 ユーザー指示)。
+// 取り出した偽天狗が元に戻ったとき (石板にも解答ゾーンにも置かずに放した) は、また天狗が出る
+function refreshAnswerTengu() {
+  const tenguPart = document.querySelector(".part.nise-tengu");
+  const atHome = !tenguPart || tenguPart.classList.contains("in-ask");
+  answerTengu.classList.toggle("no-tengu", !atHome);
+  answerTengu.classList.toggle("takeable", atHome && !!tenguPart && !isQuestionSolved(FINAL_INDEX));
 }
 function hideAnswerTengu() {
   answerTengu.hidden = true;
@@ -393,8 +402,8 @@ function startQuestion(index) {
 const prevBtn = document.getElementById("prev-btn");
 const nextBtn = document.getElementById("next-btn");
 function goToQuestion(i) {
-  const last = finalUnlocked() ? FINAL_INDEX : LAST_QUESTION_INDEX; // 16問目は15問目に正解してから
-  if (i < 0 || i > last) return;
+  // 16問目へは、15問目に正解していなくても「進む」で行ける (2026-11-27 ユーザー指示: 途中で16問目に気付いた人のため)
+  if (i < 0 || i > FINAL_INDEX) return;
   startQuestion(i);
 }
 prevBtn.addEventListener("click", () => { playSound("click"); goToQuestion(currentQuestionIndex - 1); });

@@ -392,12 +392,12 @@ body {
 /* 音量の画面のベルのパーツ: 音量の画面の中にあるとき (まだ取り出していない / 戻した) はステージに出さない */
 .part.ui-bell.in-volume { display: none; }
 
-/* ---------- 16問目 (最終問題): 白紙。問題番号・タイマー・ふつうのパーツは出さない ----------
-   早押しボタン (押しても反応しない)・「これで回答」・戻る/進むは残る。16問目用のパーツ (偽天狗・鼻) だけが出る */
+/* ---------- 16問目 (最終問題): 問題番号・タイマー・問題文は出さない ----------
+   早押しボタン (押しても反応しない)・「これで回答」・戻る/進むは残る。
+   まだ使っていないふつうのパーツは、そのまま石板に残す (2026-11-27 ユーザー指示。白紙に見えるのは、15問目までで全部使ったとき) */
 #stage.final #question-number,
 #stage.final #question-timer,
 #stage.final #buzzer-hint,
-#stage.final .part:not(.final-part),
 #stage.final #answer-mark { display: none; }
 #stage.final #buzzer-btn { cursor: default; }
 /* 偽天狗 (roam) は16問目より前でも取り出せるので、取り出した後はどの問題でも見える (2026-11-24 ユーザー指示)。鼻は16問目だけ */
@@ -414,6 +414,10 @@ body {
   pointer-events: none;
 }
 #answer-tengu[hidden] { display: none; }
+/* 偽天狗のパーツをまだ取り出していないときは、この天狗の絵を掴める (drag.js) */
+#answer-tengu.takeable img { pointer-events: auto; cursor: grab; touch-action: none; }
+/* 偽天狗をパーツとして取り出した後は、天狗の絵は出さず、吹き出しだけで答えを言う (2026-11-27 ユーザー指示) */
+#answer-tengu.no-tengu img { visibility: hidden; }
 /* 2026-11-27 ユーザー指示: 天狗は早押しボタンの左 (面が右を向いているので)、吹き出しはその右でしっぽは左向き */
 #answer-tengu img {
   position: absolute;

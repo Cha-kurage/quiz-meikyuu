@@ -18,3 +18,6 @@ npm-debug.log*
 
 # Illustrator の一時ファイル
 ~ai-*.tmp
+
+# 元素材の Illustrator ファイル (2026-11-27 ユーザー指示でリポジトリから外した。手元には残っている)
+*.ai
