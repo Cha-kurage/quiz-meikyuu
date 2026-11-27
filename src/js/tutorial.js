@@ -11,7 +11,7 @@
   const tengu = document.getElementById("tut-tengu");
   const textEl = document.getElementById("tut-text");
   const nextBtn = document.getElementById("tut-next");
-  const skipBtn = document.getElementById("tut-skip"); // 今は外している (index.html)。無ければ使わない
+  const skipBtn = document.getElementById("tut-skip"); // メニューのボタンの右の「スキップ」。チュートリアル中だけ出す
   const yesBtn = document.getElementById("tut-yes");
   const noBtn = document.getElementById("tut-no");
 
@@ -246,6 +246,7 @@
   }
   function beginTutorial() {
     root.hidden = false;
+    skipBtn.hidden = false;
     showStep(0);
     clearInterval(checkTimer);
     checkTimer = setInterval(check, CHECK_MS);
@@ -260,6 +261,7 @@
     clearReveal();
     clearFocus();
     root.hidden = true;
+    skipBtn.hidden = true;
     stage.classList.remove("tutorial", "tut-buzzer", "tut-no-submit", "tut-no-buzzer", "tut-no-menu");
     startQuestion(returnIndex);
   }
@@ -311,7 +313,7 @@
 
   nextBtn.addEventListener("click", () => { playSound("click"); next(); });
   textEl.addEventListener("click", () => { if (!typedAll) finishTyping(); });
-  if (skipBtn) skipBtn.addEventListener("click", () => { playSound("click"); endTutorial(); });
+  skipBtn.addEventListener("click", () => { playSound("click"); closeAsk(); endTutorial(); });
   document.addEventListener("volume:opened", () => { volumeOpenedSinceStep = true; });
 
   // ページを開いたら、まずチュートリアルから。門 (gate.js) が開いてから、偽天狗がしゃべり始める
